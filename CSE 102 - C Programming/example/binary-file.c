@@ -1,41 +1,39 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <string.h>
 
-#define BIN_FILE "binary-file.bin"
-
-typedef struct Point2D {
-	double x, y;
-} Point2D;
-
+/*  Example of reading and writing string */
 
 int main (void) {
-	FILE * fid;
-	int i;
-	const int size = 30;
-	Point2D p[size], tmp;
+    char str1[30] = "Emirkan Burak Yilmaz";
+    char str2[30] = "Mary Jane";
+    FILE * fid; 
+    int i;
 
-	srand(time(NULL));
+    fid = fopen("binary-file.bin", "wb");
+    if (fid != NULL) {
+        /* Don't forget to add +1 to strlen o.w. '\0' is forgetten */
+        fwrite(str1, sizeof(char), strlen(str1) + 1, fid);
+        fwrite(str2, sizeof(char), strlen(str2) + 1, fid);
+        fclose(fid);
 
-	for (i = 0; i < size; ++i) {
-		p[i].x = rand() % 100; 
-		p[i].y = rand() % 100; 
-	}
+        printf("str1: %s\n", str1);
+        printf("str2: %s\n", str2);
+    } 
 
-	fid = fopen(BIN_FILE, "wb");
-	if (fid != NULL) {
+    fid = fopen("a.bin", "rb");
+    if (fid != NULL) {
+        i = 0;
+        do fread(str2 + i, sizeof(char), 1, fid);
+        while (str2[i++] != '\0');
 
-		fwrite(p, sizeof(Point2D), size, fid);
-		fclose(fid);
+        i = 0;
+        do fread(str1 + i, sizeof(char), 1, fid);
+        while (str1[i++] != '\0');
 
-		fid = fopen(BIN_FILE, "rb");
-		if (fid != NULL) {
-			for (i = 0; i < size; ++i) {
-				fread(&tmp, sizeof(Point2D), 1, fid);
-				printf("p: %2f %2f\n", tmp.x, tmp.y);
-			}
-			putchar('\n');
-			fclose(fid);
-		}
-	}
+        fclose(fid);
+
+        printf("str1: %s\n", str1);
+        printf("str2: %s\n", str2);
+    }
 }
