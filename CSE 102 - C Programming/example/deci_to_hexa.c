@@ -4,26 +4,19 @@
 
 char * deci_to_hexa (int deci) {
     char tmp[20], * hexa;
-    int r, i = 0, j;
+    int r, n = 0, i;
 
     do {
         r = deci % 16;
-        
-        if (r < 10)
-            tmp[i++] =  r + '0';
-        else
-            tmp[i++] = r - 10 + 'A';
-        
+        tmp[n++] = r < 10 ? r + '0' : r - 10 + 'A';
         deci /= 16;
     } while (deci > 0);
 
-    hexa = (char *) calloc(i + 1, sizeof(char));
+    hexa = (char *) calloc(n + 1, sizeof(char));
     if (hexa != NULL) {
-        j = 0;
-
-        while (i >= 0)
-            hexa[j++] = tmp[--i];
-        hexa[j] = '\0';
+        for (i = 0, n -= 1; n >= 0; ++i, --n)
+            hexa[i] = tmp[n];
+        hexa[i] = '\0';
     }
 
     return hexa;
