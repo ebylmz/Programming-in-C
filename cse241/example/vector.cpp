@@ -73,4 +73,6 @@ int main (void) {
 
     v2.clear();
     cout << "Vector size after clear : " << v2.size() << endl;
+
+    return 0;
 }
