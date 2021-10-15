@@ -4,8 +4,8 @@
 
 using namespace std;
 
-void test1() {
-
+void test1 () {
+    peg_start();
 }
 
 int main (void) {
