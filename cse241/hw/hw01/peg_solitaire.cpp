@@ -9,7 +9,7 @@ using namespace std;
  * Game Management
  **********************************************************************************/
 
-void peg_start () {
+void pegStart () {
     char new_game;
     BoardType btype;
 
@@ -23,10 +23,10 @@ void peg_start () {
         initBoard(b, btype);
         
         do {
-            show_board(b);
+            showBoard(b);
             // Get the movement
             // Check and apply the movement
-        } while (is_game_over(b));
+        } while (isGameOver(b));
 
         // Ask for new game
         cout << "Do you want to play again(Y/N): ";
@@ -59,7 +59,7 @@ bool isValidMovement () {
 }
 
 //! NOT IMPLEMENTED YET
-bool is_game_over (vector<vector<CellState>> & board) {
+bool isGameOver (vector<vector<CellState>> & board) {
     bool r;
     return r;
 }
@@ -73,7 +73,7 @@ void initBoard (vector<vector<CellState>>& b, BoardType btype) {
     //! Board are not created yet
     switch (btype) {
         case french:
-            create_board(b, 7, 7, peg);
+            createBoard(b, 7, 7, peg);
             b[0][1] = b[0][0] = b[1][0] = out;
             b[0][5] = b[0][6] = b[1][6] = out;
             b[5][0] = b[6][0] = b[6][1] = out;
@@ -81,31 +81,31 @@ void initBoard (vector<vector<CellState>>& b, BoardType btype) {
             b[2][3] = empty;
             break;
         case german:
-            create_board(b, 9, 9, peg);
+            createBoard(b, 9, 9, peg);
             // hole b[4][4]
             break;
         case asymmetrical:
-            create_board(b, 8, 8, peg);
+            createBoard(b, 8, 8, peg);
             // hole b[4][3]
             break;
         case english:
-            create_board(b, 7, 7, peg);
+            createBoard(b, 7, 7, peg);
             // hole b[3][3]
             break;
         case diamond:
-            create_board(b, 9, 9, peg);
+            createBoard(b, 9, 9, peg);
             // hole b[4][4]
             break;
         case triangular:
-            create_board(b, 5, 9, peg);
+            createBoard(b, 5, 9, peg);
             // hole b[0][4]
             break;
         default:
-           throw_error("Undefined board type\nBoard was unable to created correctly", "create_board");
+           throwError("Undefined board type\nBoard was unable to created correctly", "createBoard");
     }
 }
 
-void create_board (vector<vector<CellState>> & b, int row, int col, CellState c) {
+void createBoard (vector<vector<CellState>> & b, int row, int col, CellState c) {
     b.resize(row);
     for (int i = 0; i < row; ++i) {
         b[i].resize(col);
@@ -114,7 +114,7 @@ void create_board (vector<vector<CellState>> & b, int row, int col, CellState c)
     }
 }
 
-void show_board (const vector<vector<CellState>> & b) {
+void showBoard (const vector<vector<CellState>> & b) {
     // Print column order
     cout << "    ";
     for (int j = 0; j < b[0].size(); ++j)
@@ -145,13 +145,13 @@ void show_board (const vector<vector<CellState>> & b) {
 BoardType select_board_type () {
     int r;
 
-    print_all_boards();
-    r = get_choice("Select Your board type(1...6): ", 1, 6);
+    printAllBoards();
+    r = getChoice("Select Your board type(1...6): ", 1, 6);
 
     return static_cast<BoardType>(r);
 }
 
-void print_all_boards () {
+void printAllBoards () {
     cout    << "1- French\n"
             << "---------------------\n"
             << "    P P P\n"
@@ -227,11 +227,11 @@ void print_all_boards () {
  * Utility
  **********************************************************************************/
 
-void throw_error (string prompt, string location) {
+void throwError (string prompt, string location) {
     cout << "[!]" << prompt << "(" << location << ")" << endl;
 }
 
-int get_choice (string prompt, int lb, int ub) {
+int getChoice (string prompt, int lb, int ub) {
     int r;
     
     cout << prompt << endl;    
@@ -244,7 +244,7 @@ int get_choice (string prompt, int lb, int ub) {
     return r;    
 }
 
-int get_choice (string in_prompt, string err_prompt, int lb, int ub) {
+int getChoice (string in_prompt, string err_prompt, int lb, int ub) {
     int r;    
         
     cout << in_prompt << endl;
