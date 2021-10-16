@@ -69,3 +69,71 @@ void show_vector_size (const vector<vector<CellState>> v) {
     cout    << "Size:     " << v.size() << endl
             << "Capacity: " << v.capacity() << endl;
 }   
+
+/*
+        // Define the position after movement done
+        switch (direction) {
+            case up_d:
+                jumpRow = mov.currentRow - 1;
+                jumpCol = mov.currentCol;
+
+                targetRow = mov.currentRow - 2;
+                targetCol = mov.currentCol;                
+                break;
+            case down_d:
+                jumpRow = mov.currentRow + 1;
+                jumpCol = mov.currentCol;
+
+                targetRow = mov.currentRow + 2;
+                targetCol = mov.currentCol;                
+                break;
+            case left_d:
+                jumpRow = mov.currentRow;
+                jumpCol = mov.currentCol - 1;
+
+                targetRow = mov.currentRow;
+                targetCol = mov.currentCol - 2;                
+                break;
+            case right_d:
+                jumpRow = mov.currentRow;
+                jumpCol = mov.currentCol + 1;
+
+                targetRow = mov.currentRow;
+                targetCol = mov.currentCol + 2;                
+                break;
+            case upRight_d:
+                jumpRow = mov.currentRow - 1;
+                jumpCol = mov.currentCol + 1;
+
+                targetRow = mov.currentRow - 2;
+                targetCol = mov.currentCol + 2;                
+                break;
+            case upLeft_d:
+                jumpRow = mov.currentRow - 1;
+                jumpCol = mov.currentCol - 1;
+
+                targetRow = mov.currentRow - 2;
+                targetCol = mov.currentCol - 2;                
+                break;
+            case downLeft_d:
+                jumpRow = mov.currentRow + 1;
+                jumpCol = mov.currentCol - 1;
+
+                targetRow = mov.currentRow + 2;
+                targetCol = mov.currentCol - 2;                
+                break;
+            case downRight_d:
+                jumpRow = mov.currentRow + 1;
+                jumpCol = mov.currentCol + 1;
+
+                targetRow = mov.currentRow + 2;
+                targetCol = mov.currentCol + 2;                
+                break;
+            default:
+                throwError("Undefined board type. Movement was unable to check correctly", "isValidMovement");
+                r = EXIT_FAILURE;
+        }
+
+
+    } while (1);    //!
+*/

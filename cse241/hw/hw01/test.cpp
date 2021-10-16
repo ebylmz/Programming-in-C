@@ -4,9 +4,12 @@
 
 using namespace std;
 
+// There should be at least 10 different run
+
 void test1 () {
-    peg_start();
+    pegStart();
 }
+
 
 int main (void) {
     test1();
