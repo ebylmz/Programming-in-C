@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <cmath>
 #include "peg_solitaire.h"
 
 using namespace std;  
@@ -17,17 +18,26 @@ void pegStart () {
 
     do {
         vector<vector<CellState>> board;
-        Movement mov;
+        int r = EXIT_SUCCESS;
 
         // There are 6 different type of boards. Select one of them 
         btype = selectBoardType();
         initBoard(board, btype);
-        
+
         do {
-            showBoard(board);
-            getMovement(board, mov);
-            applyMovement(board, mov);
-        } while (isGameOver(board));
+            int startRow, startCol;
+            Direction dir;
+
+            if (r == EXIT_FAILURE) {
+                throwError("Invalid Move");
+                r = EXIT_SUCCESS;
+            }
+            else
+                showBoard(board);
+
+            getMovement(board, startRow, startCol, dir);
+            r = applyMovement(board, startRow, startCol, dir);
+        } while (r == EXIT_FAILURE || isGameOver(board) == false);
 
         // Ask for new game
         cout << "Do you want to play again(Y/N): ";
@@ -36,84 +46,203 @@ void pegStart () {
 
 }
 
-void getMovement (const vector<vector<CellState>> & board, Movement & mov) {
+void getMovement (const vector<vector<CellState>> & board, int & startRow, int & startCol, Direction & dir) {
+    string mov;
     bool err;
+    
+    cout << "\nMovement: ";
+    cin >> mov;
+    convertUpperCase(mov);
 
-    do {
-        string s;
-        cout << "\nMovement: ";
-        cin >> s;
+    if (mov.length() <= 5 && mov[2] == '-') {
+        startCol = mov[0] - 'A';
+        startRow = mov[1] - '1';
+        dir = getDirection(mov);
+    }
+    // throwError(".................", "getMovement");
+
+    // Return ...
+}
+
+Direction getDirection (string & movement) {
+    Direction dir = none_d;
+
+    if (movement.length() == 4 || movement.length() == 5) {
+        int x = 0, y = 0;
+        bool err = false;
         
-        if (s.length() == 4 || s.length() == 5) {
-            err = false;
-            
-            mov.target.row = mov.jump.row = mov.source.row = s[0] - 'A';
-            mov.target.col = mov.jump.col = mov.source.col = s[1] - '1';
-
-            //! NOT IMPLEMENTED YET
-            // up/down movements are invalid for triangular board 
-            // diagonal movements are invalid for all the boards except triangular board 
-
-            for (int i = 3; i < s.length() && err == false; ++i) {
-                if (i == 4 && s[3] == s[4])
+        for (int i = 3; i < movement.length() && err == false; ++i) {
+            switch (movement[i]) {
+                case 'U':
+                    ++y;
+                    break;
+                case 'D':
+                    --y;
+                    break;
+                case 'R':
+                    ++x;
+                    break;
+                case 'L':
+                    --x;
+                    break;
+                default:
                     err = true;
-                else {
-                    switch (s[i]) {
-                        case 'U':
-                        case 'u':
-                            --mov.jump.row;  
-                            mov.target.row -= 2;  
-                            break;
-                        case 'D':
-                        case 'd':
-                            ++mov.jump.row;  
-                            mov.target.row += 2;  
-                            break;
-                        case 'R':
-                        case 'r':
-                            ++mov.jump.col;
-                            mov.target.col += 2;
-                            break;
-                        case 'L':
-                        case 'l':
-                            --mov.jump.col;
-                            mov.target.col -= 2;
-                            break;
-                        default:
-                            err = true;
-                    }
-                }
             }
+        } 
+
+        if (err == false) {
+            if (x == 0 && y == 1)
+                dir = up_d;
+            else if (x == 0 && y == -1)
+                dir = down_d;
+            else if (x == 1 && y == 0)
+                dir = right_d;
+            else if (x == -1 && y == 0)
+                dir = left_d;
+            else if (x == 1 && y == 1)
+                dir = upRight_d;
+            else if (x == -1 && y == 1)
+                dir = upLeft_d;
+            else if (x == 1 && y == -1)
+                dir = downRight_d;
+            else if (x == -1 && y == -1)
+                dir = downLeft_d;
         }
-        else
-            err = true;
-        
-        if (err == true)
-            throwError(".................", "getMovement");
-    } while (err == true || isValidMovement(board, mov) == false);
+    }
+
+    return dir;
 }
 
-bool isValidMovement (const vector<vector<CellState>> & board, Movement & m) {
-    return
-        isInBoard(board, m.source.row, m.source.col)  &&
-        board[m.source.row][m.source.col] == peg      &&
-        isInBoard(board, m.jump.row, m.jump.col)      &&
-        board[m.jump.row][m.jump.col] == peg          &&
-        isInBoard(board, m.target.row, m.target.col)  && 
-        board[m.target.row][m.target.col] == empty    ;
+int applyMovement (vector<vector<CellState>> & board, int startRow, int startCol, Direction dir) {
+    int r = EXIT_FAILURE;
+
+    // up/down movements are invalid for triangular board 
+    // diagonal movements are invalid for all the boards except triangular board 
+    if (dir != none_d &&
+        ((isDiagonalMovement(dir) && isTriangularBoard(board)) ||
+         (!isDiagonalMovement(dir) && !isTriangularBoard(board)))) {
+
+        int jumpRow, jumpCol, targetRow, targetCol;
+        r = getMoveCell(startRow, startCol, dir, jumpRow, jumpCol, targetRow, targetCol);
+
+        // Check if movement is exceed board
+        if (isMovable(board, startRow, startCol, dir)) {
+            // Apply movement
+            board[startRow][startCol] = empty;
+            board[jumpRow][jumpCol] = empty;
+            board[targetRow][targetCol] = peg;
+            r = EXIT_SUCCESS;
+
+            cout << "_____________________________" << endl;
+            cout << "start  " << '[' << startRow << ", " << startCol << ']' << endl;
+            cout << "jump   " << '[' << jumpRow << ", " << jumpCol << ']' << endl;
+            cout << "target " << '[' << targetRow << ", " << targetCol << ']' << "" << endl;
+        }
+    }
+    return r;
 }
 
-void applyMovement (vector<vector<CellState>> & b, Movement & mov) {
-    // First check the movement direction is valid for the current board
-    b[mov.source.row][mov.source.col] = empty;    
-    b[mov.jump.row][mov.jump.col]     = empty;    
-    b[mov.target.row][mov.target.col] = peg;    
+int getMoveCell (int startRow, int startCol, Direction dir, int & jumpRow, int & jumpCol, int & targetRow, int & targetCol) {
+    int r = EXIT_SUCCESS;
+    
+    jumpRow = targetRow = startRow;
+    jumpCol = targetCol = startCol;
+    switch (dir) {
+        case up_d:
+            --jumpRow;
+            targetRow -= 2;
+            break;
+        case down_d:
+            ++jumpRow;
+            targetRow += 2;
+            break;
+        case left_d:
+            --jumpCol;
+            targetCol -= 2;
+            break;
+        case right_d:
+            ++jumpCol;
+            targetCol += 2;
+            break;
+        case upRight_d:
+            --jumpRow;
+            ++jumpCol;
+            targetRow -= 2;
+            targetCol += 2;
+            break;
+        case upLeft_d:
+            --jumpRow;
+            --jumpCol;
+            targetRow -= 2;
+            targetCol -= 2;
+            break;
+        case downLeft_d:
+            ++jumpRow;
+            --jumpCol;
+            targetRow += 2;
+            targetCol -= 2;
+            break;
+        case downRight_d:
+            ++jumpRow;
+            ++jumpCol;
+            targetRow += 2;
+            targetCol += 2;
+        default:
+            r = EXIT_FAILURE;
+    }
+
+    return r;
 }
 
-//! NOT IMPLEMENTED YET
-bool isGameOver (vector<vector<CellState>> & board) {
-    // The game continues until there are no pegs to move legally.
+bool isMovable (const vector<vector<CellState>> & board, int startRow, int startCol) {
     bool r;
+    if (isTriangularBoard(board)) {
+        // For triangular board just try diagonal movements
+        r = isMovable(board, startRow, startCol, upLeft_d)   ||
+            isMovable(board, startRow, startCol, upRight_d)  ||
+            isMovable(board, startRow, startCol, downLeft_d) ||
+            isMovable(board, startRow, startCol, downRight_d);
+    }
+    else {
+        // For non-triangular boards try the for main direction
+        r = isMovable(board, startRow, startCol, up_d)   ||
+            isMovable(board, startRow, startCol, down_d) ||
+            isMovable(board, startRow, startCol, left_d) ||
+            isMovable(board, startRow, startCol, right_d);
+    }
+
+    return r;
+}
+
+bool isMovable (const vector<vector<CellState>> & board, int startRow, int startCol, Direction dir) {
+    int r, v, jumpRow, jumpCol, targetRow, targetCol;
+    
+    if (dir != none_d &&
+        ((isDiagonalMovement(dir) && isTriangularBoard(board)) ||
+         (!isDiagonalMovement(dir) && !isTriangularBoard(board)))) {
+        
+        v = getMoveCell(startRow, startCol, dir, jumpRow, jumpCol, targetRow, targetCol);
+        
+        r = v == EXIT_SUCCESS                                                           && 
+            isInBoard(board, startRow, startCol) && board[startRow][startCol] == peg    &&
+            isInBoard(board, jumpRow, jumpCol) && board[jumpRow][jumpCol] == peg        &&
+            isInBoard(board, targetRow, targetCol) && board[targetRow][targetCol] == empty;
+    } 
+    return r;
+}
+
+bool isDiagonalMovement (Direction dir) {
+    return dir == upRight_d || dir == upLeft_d || dir == downRight_d || dir == downLeft_d;
+}
+
+bool isGameOver (vector<vector<CellState>> & board) {
+    bool r;
+    
+    // The game continues until there are no pegs to move legally.
+    for (int i = 0, r = true; i < board.size() && r == true; ++i)
+        for (int j = 0; j < board[i].size() && r == true; ++j)
+            r = isMovable(board, i, j);
+
     return r;
 }
 
@@ -169,7 +298,7 @@ void createBoard (vector<vector<CellState>> & b, int row, int col, CellState c) 
 
 void showBoard (const vector<vector<CellState>> & b) {
     // Print column order
-    cout << "    ";
+    cout << "\n    ";
     for (int j = 0; j < b[0].size(); ++j)
         cout << static_cast<char>('A' + j) << ' ';
     cout << "\n\n";
@@ -207,7 +336,6 @@ BoardType selectBoardType () {
 
 bool isInBoard (const vector<vector<CellState>> & b, int row, int col) {
     // Define the movement bound for given board
-
     return  0 <= row && row < b.size()      &&
             0 <= col && col < b[0].size()   &&
             b[row][col] != out;
@@ -295,11 +423,11 @@ void printAllBoardTypes () {
  **********************************************************************************/
 
 void throwError (string prompt) {
-    cout << "[!]" << prompt << endl;
+    cout << "[!] " << prompt << endl;
 }
 
 void throwError (string prompt, string location) {
-    cout << "[!]" << prompt << "(" << location << ")" << endl;
+    cout << "[!] " << prompt << "(" << location << ")" << endl;
 }
 
 int getChoice (string prompt, int lb, int ub) {
@@ -326,4 +454,13 @@ int getChoice (string in_prompt, string err_prompt, int lb, int ub) {
             cout << err_prompt << endl;
     } while (r < 0 || r > 6);
     return r;
+}
+
+char upperCase (char c) {
+    return 'a' <= c && c <= 'z' ? 'A' + c - 'a' : c;
+}
+
+void convertUpperCase (string & s) {
+    for (auto it = s.begin(); it != s.end(); ++it)
+        *it = upperCase(*it); 
 }
