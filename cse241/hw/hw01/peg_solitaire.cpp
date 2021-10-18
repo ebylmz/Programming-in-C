@@ -27,8 +27,8 @@ void pegStart () {
             srand(time(NULL));
             choice = rand() % 6 + 1;
         }
-        btype = static_cast<BoardType>(choice);
 
+        btype = static_cast<BoardType>(choice);
         initBoard(board, btype);
 
         // There are two types of game: human & computer
@@ -114,7 +114,6 @@ void startComputerGame (vector<vector<CellState>> & board) {
 int getMovement (int & startRow, int & startCol, Direction & dir) {
     int r;
     string mov;
-
     do {
         cout << "\nMovement: ";
         cin >> mov;
@@ -211,7 +210,7 @@ string dirToStr (Direction dir) {
         case Direction::downRight:
             s = "DR"; break;
         default:
-            s = ""; //!    
+            s = "NONE"; 
     }
     return s;
 }
@@ -391,37 +390,142 @@ void initBoard (vector<vector<CellState>>& b, BoardType btype) {
     //! Board are not created yet
     switch (btype) {
         case BoardType::french:
-            createBoard(b, 7, 7, CellState::peg);
-            b[0][1] = b[0][0] = b[1][0] = CellState::out;
-            b[0][5] = b[0][6] = b[1][6] = CellState::out;
-            b[5][0] = b[6][0] = b[6][1] = CellState::out;
-            b[5][6] = b[6][5] = b[6][6] = CellState::out;
-            b[2][3] = CellState::empty;
-            break;
+            initBoardFrench(b);         break;
         case BoardType::german:
-            createBoard(b, 9, 9, CellState::peg);
-            // hole b[4][4]
-            break;
+            initBoardGerman(b);         break;
         case BoardType::asymmetrical:
-            createBoard(b, 8, 8, CellState::peg);
-            // hole b[4][3]
-            break;
+            initBoardAsymmetrical(b);   break;
         case BoardType::english:
-            createBoard(b, 7, 7, CellState::peg);
-            // hole b[3][3]
-            break;
+            initBoardEnglish(b);        break;
         case BoardType::diamond:
-            createBoard(b, 9, 9, CellState::peg);
-            // hole b[4][4]
-            break;
+            initBoardDiamond(b);        break;
         case BoardType::triangular:
-            createBoard(b, 5, 9, CellState::peg);
-            // hole b[0][4]
-            break;
+            initBoardTriangular(b);     break;
         default:
            throwError("Undefined board type. Board was unable to create correctly", "createBoard");
     }
 }
+
+void initBoardFrench(vector<vector<CellState>> & board) {
+    createBoard(board, 7, 7, CellState::peg);
+
+    for (int i = 0, n = 2; i < 2; ++i, --n)
+        for (int j = 0; j < n; ++j)
+            board[i][j] = CellState::out;
+
+    for (int i = 0, n = 5; i < 2; ++i, ++n)
+        for (int j = n; j < 7; ++j)
+            board[i][j] = CellState::out;
+
+    for (int i = 5, n = 1; i < 7; ++i, ++n)
+        for (int j = 0; j < n; ++j)
+            board[i][j] = CellState::out;
+
+    for (int i = 5, n = 6; i < 7; ++i, --n)
+        for (int j = n; j < 7; ++j)
+            board[i][j] = CellState::out;
+    
+    board[2][3] = CellState::empty;
+}   
+
+void initBoardGerman(vector<vector<CellState>> & board) {
+    createBoard(board, 9, 9, CellState::peg);
+
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            board[i][j] = CellState::out;
+
+    for (int i = 0; i < 3; ++i)
+        for (int j = 6; j < 9; ++j)
+            board[i][j] = CellState::out;
+
+    for (int i = 6; i < 9; ++i)
+        for (int j = 0; j < 3; ++j)
+            board[i][j] = CellState::out;
+
+    for (int i = 6; i < 9; ++i)
+        for (int j = 6; j < 9; ++j)
+            board[i][j] = CellState::out;
+    
+    board[4][4] = CellState::empty;
+}   
+
+void initBoardAsymmetrical(vector<vector<CellState>> & board) {
+    createBoard(board, 9, 8, CellState::peg);
+
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 2; ++j)
+            board[i][j] = CellState::out;
+
+    for (int i = 0; i < 3; ++i)
+        for (int j = 5; j < 8; ++j)
+            board[i][j] = CellState::out;
+
+    for (int i = 6; i < 9; ++i)
+        for (int j = 0; j < 2; ++j)
+            board[i][j] = CellState::out;
+
+    for (int i = 6; i < 9; ++i)
+        for (int j = 5; j < 8; ++j)
+            board[i][j] = CellState::out;
+    
+    board[4][3] = CellState::empty;
+}  
+
+void initBoardEnglish(vector<vector<CellState>> & board) {
+    createBoard(board, 7, 7, CellState::peg);
+
+    for (int i = 0; i < 2; ++i)
+        for (int j = 0; j < 2; ++j)
+            board[i][j] = CellState::out;
+
+    for (int i = 0; i < 2; ++i)
+        for (int j = 5; j < 7; ++j)
+            board[i][j] = CellState::out;
+
+    for (int i = 5; i < 7; ++i)
+        for (int j = 0; j < 2; ++j)
+            board[i][j] = CellState::out;
+
+    for (int i = 5; i < 7; ++i)
+        for (int j = 5; j < 7; ++j)
+            board[i][j] = CellState::out;
+
+    board[3][3] = CellState::empty;
+}   
+
+void initBoardDiamond(vector<vector<CellState>> & board) {
+    createBoard(board, 9, 9, CellState::peg);
+
+    for (int i = 0, n = 4; i < 4; ++i, --n)
+        for (int j = 0; j < n; ++j)
+            board[i][j] = CellState::out;
+
+    for (int i = 0, n = 5; i < 4; ++i, ++n)
+        for (int j = n; j < 9; ++j)
+            board[i][j] = CellState::out;
+
+    for (int i = 5, n = 1; i < 9; ++i, ++n)
+        for (int j = 0; j < n; ++j)
+            board[i][j] = CellState::out;
+
+    for (int i = 5, n = 8; i < 9; ++i, --n)
+        for (int j = n; j < 9; ++j)
+            board[i][j] = CellState::out;
+
+    board[4][4] = CellState::empty;
+}   
+
+void initBoardTriangular(vector<vector<CellState>> & board) {
+    board.resize(5);
+
+    for (int i = 0; i < 5; ++i) {
+        board[i].resize(i + 1);
+        for (int j = 0; j <= i; ++j)
+            board[i][j] = CellState::peg;
+    }
+    board[0][0] = CellState::empty;
+}   
 
 void createBoard (vector<vector<CellState>> & b, int row, int col, CellState c) {
     b.resize(row);
@@ -433,6 +537,30 @@ void createBoard (vector<vector<CellState>> & b, int row, int col, CellState c) 
 }
 
 void showBoard (const vector<vector<CellState>> & b) {
+    if (isTriangularBoard(b))
+        showTriangularBoard(b);
+    else 
+        showNonTriangularBoard(b);
+}
+
+void showTriangularBoard (const vector<vector<CellState>> & b) {
+    cout << endl;
+
+    for (int i = 0, n = 5 + b.size(); i < n; ++i)
+        cout << " ";
+    cout << "A\n";
+
+    for (int i = 0, n = 5 + b.size() + 1; i < n; ++i)
+        cout << "   ";
+    cout << "B\n";
+
+    for (int i = 0; i < b.size(); ++i) {
+        cout << 1 + i << "  ";
+        //! NOT IMPLEMENTED YET
+    }
+}
+
+void showNonTriangularBoard (const vector<vector<CellState>> & b) {
     // Print column order
     cout << "\n    ";
     for (int j = 0; j < b[0].size(); ++j)
@@ -460,6 +588,8 @@ void showBoard (const vector<vector<CellState>> & b) {
     }
 }
 
+
+
 bool isInBoard (const vector<vector<CellState>> & b, int row, int col) {
     // Define the movement bound for given board
     //! this is not valid (b[0].size for triangle)
@@ -469,9 +599,12 @@ bool isInBoard (const vector<vector<CellState>> & b, int row, int col) {
 }
 
 bool isTriangularBoard (const vector<vector<CellState>> & b) {
-    return b.size() == 5 && b[0].size() == 9;
-}
+    bool r = true;
 
+    for (int i = 0; i < b.size() && r == true; ++i)
+        r = b[i].size() == i + 1;
+    return r;
+}
 
 void printAllBoardTypes () {
     cout    << "1- French                2- German\n"

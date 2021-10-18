@@ -16,6 +16,7 @@
 4   P P P P  
 5  P P P P P
 
+
 // Notation for user interface
 
         A1
@@ -24,10 +25,19 @@
   A4  B4  C4  D4
 A5  B5  C5  D5  E5
 
-// array representation
+// Array representation
 
 A1
 A2 B2
 A3 B3 C3 
 A4 B4 C4 D4
 A5 B5 C5 D5 E5
+
+
+// User interface
+        A    
+         B 
+1     .   C
+2    P P   D 
+3   P P P  
+4  P P P P

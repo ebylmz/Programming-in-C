@@ -38,6 +38,7 @@ string dirToStr (Direction dir);
 
 int applyMovement (vector<vector<CellState>> & b, int startRow, int startCol, Direction dir);
 // Applies the movement, for invalid operation returns EXIT_FAILURE
+//! NOT IMPLEMENTED FOR TRIANGULAR BOARD
 
 void moveUp (int & jumpRow, int & targetRow);
 void moveDown (int & jumpRow, int & targetRow);
@@ -69,7 +70,18 @@ int calculateScore (vector<vector<CellState>> & board);
  **********************************************************************************/
 
 void initBoard (vector<vector<CellState>>& b, BoardType btype);
-//! NOT IMPLEMENTED YET
+
+void initBoardFrench(vector<vector<CellState>> & board);        
+
+void initBoardGerman(vector<vector<CellState>> & board);        
+
+void initBoardAsymmetrical(vector<vector<CellState>> & board);  
+
+void initBoardEnglish(vector<vector<CellState>> & board);       
+
+void initBoardDiamond(vector<vector<CellState>> & board);       
+
+void initBoardTriangular(vector<vector<CellState>> & board);    
 
 void createBoard (vector<vector<CellState>> & b, int row, int col, CellState c);
 // Creates a board as given dimension and initiliaze all the board with c
@@ -77,12 +89,16 @@ void createBoard (vector<vector<CellState>> & b, int row, int col, CellState c);
 void showBoard (const vector<vector<CellState>> & b);
 // Prints the curent status of board
 
+void showTriangularBoard (const vector<vector<CellState>> & b);
+//! NOT IMPLEMENTED YET
+
+void showNonTriangularBoard (const vector<vector<CellState>> & b);
+
 bool isInBoard (const vector<vector<CellState>> & b, int row, int col);
-//! IMPLEMENTED FOR NON-TRIANGULAR BOARD
 // Checks if given row and col is inside of the board
+//! NOT IMPLEMENTED FOR TRIANGULAR BOARD
 
 bool isTriangularBoard (const vector<vector<CellState>> & b);
-//! DONT FORGET TO UPDATE AFTER IMPLEMENTING TRIANGULAR BOARD
 
 void printAllBoardTypes ();
 // Prints 6 different type of boards
