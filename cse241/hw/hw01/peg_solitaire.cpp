@@ -21,14 +21,21 @@ void pegStart () {
 
         // Ask the board type and initialize the board
         printAllBoardTypes();
-        btype = static_cast<BoardType>(getChoice("Select Your board type(1...6): ", 1, 6));
+        choice = getChoice("Select your board(0 for random board): ", 0, 6);
+        
+        if (choice == 0) {
+            srand(time(NULL));
+            choice = rand() % 6 + 1;
+        }
+        btype = static_cast<BoardType>(choice);
+
         initBoard(board, btype);
 
         // There are two types of game: human & computer
-        cout << "0. Exit\n"
+        cout << "______________________" << endl
+             << "0. Exit\n"
              << "1. Human Game\n"
-             << "2. Computer Game\n"
-             << "______________________" << endl;
+             << "2. Computer Game\n";
         choice = getChoice("Select the game type: ", 0, 2);
 
         switch (choice) {
@@ -46,9 +53,9 @@ void pegStart () {
         if (choice != 0) {
             showBoard(board);
             // Calculate and print the score, ask for play again
-            cout << "______________________" << endl
+            cout << "______________________\n"
+                 << "\nGame is Over!\n" 
                  << "Score: " << calculateScore(board) << endl;
-
             playAgain = getChoice("Do you want to play again(Y/N): ");
         }
     } while (playAgain == true);
@@ -62,14 +69,18 @@ void startHumanGame (vector<vector<CellState>> & board) {
         int startRow, startCol;
         Direction dir;
 
-        getMovement(board, startRow, startCol, dir);
-        r = applyMovement(board, startRow, startCol, dir);
+        r = getMovement(startRow, startCol, dir);
+        if (r == EXIT_SUDO)
+            cout << "Game is ended\n";
+        else {
+            r = applyMovement(board, startRow, startCol, dir);
 
-        if (r == EXIT_SUCCESS)
-            showBoard(board);
-        else
-            throwError("Invalid Move");
-    } while (r == EXIT_FAILURE || isGameOver(board) == false);
+            if (r == EXIT_SUCCESS)
+                showBoard(board);
+            else
+                throwError("Invalid Move");
+        }
+    } while (r != EXIT_SUDO && (r == EXIT_FAILURE || isGameOver(board) == false));
 }
 
 void startComputerGame (vector<vector<CellState>> & board) {
@@ -100,41 +111,44 @@ void startComputerGame (vector<vector<CellState>> & board) {
     } while (isGameOver(board) == false);
 }
 
-void getMovement (const vector<vector<CellState>> & board, int & startRow, int & startCol, Direction & dir) {
+int getMovement (int & startRow, int & startCol, Direction & dir) {
+    int r;
     string mov;
-    bool err;
 
     do {
-        err = true;
-
         cout << "\nMovement: ";
         cin >> mov;
         convertUpperCase(mov);
 
-        // Check  movement entered in a proper format
-        if ((mov.length() == 4 || mov.length() == 5) && isLetter(mov[0]) && isNumber(mov[1]) && mov[2] == '-') {
-            startCol = mov[0] - 'A';
-            startRow = mov[1] - '1';
+        if (mov == "EXIT")
+            r = EXIT_SUDO;
+        else {
+            // Set failure flag up in case of an errror
+            r = EXIT_FAILURE;
 
-            dir = getDirection(mov);
+            // Check if entered movement is in a proper format
+            if ((mov.length() == 4 || mov.length() == 5) && isLetter(mov[0]) && isNumber(mov[1]) && mov[2] == '-') {
+                startCol = mov[0] - 'A';
+                startRow = mov[1] - '1';
 
-            if (dir != none_d) err = false;
+                dir = getDirection(mov);
+                if (dir != Direction::none) r = EXIT_SUCCESS; 
+            }
         }
-        
-        if (err == true) 
-            throwError("Invalid movement format");
-    } while (err == true); 
+        if (r == EXIT_FAILURE) throwError("Invalid movement format");
+    } while (r == EXIT_FAILURE); 
+    return r;
 }
 
 Direction getDirection (string & movement) {
-    Direction dir = none_d;
+    Direction dir = Direction::none;
 
     if (movement.length() == 4 || movement.length() == 5) {
         int x = 0, y = 0;
         bool err = false;
         
         /*  To find the direction, use 1x1 cordinate system.
-            If given directions resulted in at orijin or out of cordinate system,
+            If given directions resulted in at orijin or CellState::out of cordinate system,
             then given directions are invalid. 
         */ 
         for (int i = 3; i < movement.length() && err == false; ++i) {
@@ -155,21 +169,21 @@ Direction getDirection (string & movement) {
 
         if (err == false) {
             if (x == 0 && y == 1)
-                dir = up_d;
+                dir = Direction::up;
             else if (x == 0 && y == -1)
-                dir = down_d;
+                dir = Direction::down;
             else if (x == 1 && y == 0)
-                dir = right_d;
+                dir = Direction::right;
             else if (x == -1 && y == 0)
-                dir = left_d;
+                dir = Direction::left;
             else if (x == 1 && y == 1)
-                dir = upRight_d;
+                dir = Direction::upRight;
             else if (x == -1 && y == 1)
-                dir = upLeft_d;
+                dir = Direction::upLeft;
             else if (x == 1 && y == -1)
-                dir = downRight_d;
+                dir = Direction::downRight;
             else if (x == -1 && y == -1)
-                dir = downLeft_d;
+                dir = Direction::downLeft;
         }
     }
 
@@ -180,21 +194,21 @@ string dirToStr (Direction dir) {
     string s;
 
     switch (dir) {
-        case up_d:
+        case Direction::up:
             s = "U";  break;
-        case down_d:
+        case Direction::down:
             s = "D";  break;
-        case left_d:
+        case Direction::left:
             s = "L";  break;
-        case right_d:
+        case Direction::right:
             s = "R";  break;
-        case upRight_d:
+        case Direction::upRight:
             s = "UR"; break;
-        case upLeft_d:
+        case Direction::upLeft:
             s = "UL"; break;
-        case downLeft_d:
+        case Direction::downLeft:
             s = "DL"; break;
-        case downRight_d:
+        case Direction::downRight:
             s = "DR"; break;
         default:
             s = ""; //!    
@@ -207,19 +221,16 @@ int applyMovement (vector<vector<CellState>> & board, int startRow, int startCol
 
     // up/down movements are invalid for triangular board 
     // diagonal movements are invalid for all the boards except triangular board 
-    if (dir != none_d &&
-        ((isDiagonalMovement(dir) && isTriangularBoard(board)) ||
-         (!isDiagonalMovement(dir) && !isTriangularBoard(board)))) {
-
+    if (isProperDirection(board, dir)) {
         // Check if movement is exceed board
         if (isMovable(board, startRow, startCol, dir)) {
             int jumpRow, jumpCol, targetRow, targetCol;
             getMoveCell(startRow, startCol, dir, jumpRow, jumpCol, targetRow, targetCol);
 
             // Apply movement
-            board[startRow][startCol] = empty;
-            board[jumpRow][jumpCol] = empty;
-            board[targetRow][targetCol] = peg;
+            board[startRow][startCol] = CellState::empty;
+            board[jumpRow][jumpCol] = CellState::empty;
+            board[targetRow][targetCol] = CellState::peg;
             r = EXIT_SUCCESS;
 
             cout << "_____________________________" << endl;
@@ -239,24 +250,24 @@ int getMoveCell (int startRow, int startCol, Direction dir, int & jumpRow, int &
     jumpCol = targetCol = startCol;
 
     switch (dir) {
-        case up_d:
+        case Direction::up:
             moveUp(jumpRow, targetRow);    break;
-        case down_d:
+        case Direction::down:
             moveDown(jumpRow, targetRow);  break;
-        case left_d:
+        case Direction::left:
             moveLeft(jumpCol, targetCol);  break;
-        case right_d:
+        case Direction::right:
             moveRight(jumpCol, targetCol); break;
-        case upRight_d:
+        case Direction::upRight:
             moveUp(jumpRow, targetRow);
             moveRight(jumpCol, targetCol); break;
-        case upLeft_d:
+        case Direction::upLeft:
             moveUp(jumpRow, targetRow);
             moveLeft(jumpCol, targetCol);  break;
-        case downLeft_d:
+        case Direction::downLeft:
             moveDown(jumpRow, targetRow);
             moveLeft(jumpCol, targetCol);  break;
-        case downRight_d:
+        case Direction::downRight:
             moveDown(jumpRow, targetRow);
             moveRight(jumpCol, targetCol); break;
         default:
@@ -290,17 +301,17 @@ bool isMovable (const vector<vector<CellState>> & board, int startRow, int start
     bool r;
     if (isTriangularBoard(board)) {
         // For triangular board just try diagonal movements
-        r = isMovable(board, startRow, startCol, upLeft_d)   ||
-            isMovable(board, startRow, startCol, upRight_d)  ||
-            isMovable(board, startRow, startCol, downLeft_d) ||
-            isMovable(board, startRow, startCol, downRight_d);
+        r = isMovable(board, startRow, startCol, Direction::upLeft)   ||
+            isMovable(board, startRow, startCol, Direction::upRight)  ||
+            isMovable(board, startRow, startCol, Direction::downLeft) ||
+            isMovable(board, startRow, startCol, Direction::downRight);
     }
     else {
         // For other boards try the 4 main direction
-        r = isMovable(board, startRow, startCol, up_d)   ||
-            isMovable(board, startRow, startCol, down_d) ||
-            isMovable(board, startRow, startCol, left_d) ||
-            isMovable(board, startRow, startCol, right_d);
+        r = isMovable(board, startRow, startCol, Direction::up)   ||
+            isMovable(board, startRow, startCol, Direction::down) ||
+            isMovable(board, startRow, startCol, Direction::left) ||
+            isMovable(board, startRow, startCol, Direction::right);
     }
 
     return r;
@@ -309,28 +320,43 @@ bool isMovable (const vector<vector<CellState>> & board, int startRow, int start
 bool isMovable (const vector<vector<CellState>> & board, int startRow, int startCol, Direction dir) {
     int r; 
     
-    if (dir != none_d && 
-        ((isDiagonalMovement(dir) && isTriangularBoard(board)) ||
-         (!isDiagonalMovement(dir) && !isTriangularBoard(board)))) {
+    if (isProperDirection(board, dir)) {
         int v, jumpRow, jumpCol, targetRow, targetCol;
         
         v = getMoveCell(startRow, startCol, dir, jumpRow, jumpCol, targetRow, targetCol);
         
         r = v == EXIT_SUCCESS                       &&
             isInBoard(board, startRow, startCol)    && 
-            board[startRow][startCol] == peg        &&
+            board[startRow][startCol] == CellState::peg        &&
             isInBoard(board, jumpRow, jumpCol)      && 
-            board[jumpRow][jumpCol] == peg          &&
+            board[jumpRow][jumpCol] == CellState::peg          &&
             isInBoard(board, targetRow, targetCol)  && 
-            board[targetRow][targetCol] == empty;
+            board[targetRow][targetCol] == CellState::empty;
     }
     else
         r = false; 
     return r;
 }
 
+bool isProperDirection (const vector<vector<CellState>> & board, Direction dir) {
+    bool r;
+
+    if (dir != Direction::none) {
+        bool triangularBoard = isTriangularBoard(board);
+        r =  triangularBoard  &&  isTriangularMovement(dir) ||
+            !triangularBoard  && !isDiagonalMovement(dir)   ; 
+    }
+    else 
+        r = false;
+    return r;
+}
+
+bool isTriangularMovement (Direction dir) {
+    return dir != Direction::none && dir != Direction::up && dir != Direction::down;
+}
+
 bool isDiagonalMovement (Direction dir) {
-    return dir == upRight_d || dir == upLeft_d || dir == downRight_d || dir == downLeft_d;
+    return dir == Direction::upRight || dir == Direction::upLeft || dir == Direction::downRight || dir == Direction::downLeft;
 }
 
 bool isGameOver (const vector<vector<CellState>> & board) {
@@ -339,7 +365,7 @@ bool isGameOver (const vector<vector<CellState>> & board) {
     // The game continues until there are no pegs to move legally.
     for (int i = 0; i < board.size() && r == true; ++i)
         for (int j = 0; j < board[i].size() && r == true; ++j)
-            if (board[i][j] == peg)
+            if (board[i][j] == CellState::peg)
                 r = !isMovable(board, i, j);
 
     return r;
@@ -350,7 +376,7 @@ int calculateScore (vector<vector<CellState>> & board) {
 
     for (int i = 0; i < board.size(); ++i) 
         for (auto it = board[i].begin(); it != board[i].end(); ++it)
-            if (*it == peg)
+            if (*it == CellState::peg)
                 ++score;
 
     return score;
@@ -364,32 +390,32 @@ int calculateScore (vector<vector<CellState>> & board) {
 void initBoard (vector<vector<CellState>>& b, BoardType btype) {
     //! Board are not created yet
     switch (btype) {
-        case french:
-            createBoard(b, 7, 7, peg);
-            b[0][1] = b[0][0] = b[1][0] = out;
-            b[0][5] = b[0][6] = b[1][6] = out;
-            b[5][0] = b[6][0] = b[6][1] = out;
-            b[5][6] = b[6][5] = b[6][6] = out;
-            b[2][3] = empty;
+        case BoardType::french:
+            createBoard(b, 7, 7, CellState::peg);
+            b[0][1] = b[0][0] = b[1][0] = CellState::out;
+            b[0][5] = b[0][6] = b[1][6] = CellState::out;
+            b[5][0] = b[6][0] = b[6][1] = CellState::out;
+            b[5][6] = b[6][5] = b[6][6] = CellState::out;
+            b[2][3] = CellState::empty;
             break;
-        case german:
-            createBoard(b, 9, 9, peg);
+        case BoardType::german:
+            createBoard(b, 9, 9, CellState::peg);
             // hole b[4][4]
             break;
-        case asymmetrical:
-            createBoard(b, 8, 8, peg);
+        case BoardType::asymmetrical:
+            createBoard(b, 8, 8, CellState::peg);
             // hole b[4][3]
             break;
-        case english:
-            createBoard(b, 7, 7, peg);
+        case BoardType::english:
+            createBoard(b, 7, 7, CellState::peg);
             // hole b[3][3]
             break;
-        case diamond:
-            createBoard(b, 9, 9, peg);
+        case BoardType::diamond:
+            createBoard(b, 9, 9, CellState::peg);
             // hole b[4][4]
             break;
-        case triangular:
-            createBoard(b, 5, 9, peg);
+        case BoardType::triangular:
+            createBoard(b, 5, 9, CellState::peg);
             // hole b[0][4]
             break;
         default:
@@ -418,13 +444,13 @@ void showBoard (const vector<vector<CellState>> & b) {
         cout << 1 + i << "   ";
         for (auto it = b[i].begin(); it != b[i].end(); ++it) {
             switch (*it) {
-                case peg:
+                case CellState::peg:
                     cout << "P";
                     break;
-                case empty:
+                case CellState::empty:
                     cout << ".";
                     break;
-                case out:
+                case CellState::out:
                     cout << " ";
                     break;
             }
@@ -439,7 +465,7 @@ bool isInBoard (const vector<vector<CellState>> & b, int row, int col) {
     //! this is not valid (b[0].size for triangle)
     return  0 <= row && row < b.size()      &&
             0 <= col && col < b[0].size()   &&
-            b[row][col] != out;
+            b[row][col] != CellState::out;
 }
 
 bool isTriangularBoard (const vector<vector<CellState>> & b) {
@@ -448,74 +474,42 @@ bool isTriangularBoard (const vector<vector<CellState>> & b) {
 
 
 void printAllBoardTypes () {
-    cout    << "1- French\n"
-            << "---------------------\n"
-            << "    P P P\n"
-            << "  P P P P P\n"
-            << "P P P . P P P\n"
-            << "P P P P P P P\n"
-            << "P P P P P P P\n"
-            << "  P P P P P\n"
-            << "    P P P\n"
-            << "\n\n";
+    cout    << "1- French                2- German\n"
+            << "--------------------     --------------------\n"
+            << "      P P P                      P P P\n"
+            << "    P P P P P                    P P P\n"
+            << "  P P P . P P P                  P P P\n"
+            << "  P P P P P P P            P P P P P P P P P\n"
+            << "  P P P P P P P            P P P P . P P P P\n"
+            << "    P P P P P              P P P P P P P P P\n"
+            << "      P P P                      P P P\n"
+            << "                                 P P P\n"
+            << "                                 P P P\n"
+            << "\n";
 
-    cout    << "2- German\n"
-            << "---------------------\n"
+    cout    << "3- Asymmetrical          4- English\n"
+            << "--------------------     --------------------\n"
+            << "      P P P                    P P P\n"
+            << "      P P P                    P P P\n"
+            << "      P P P                P P P P P P P\n"
+            << "  P P P P P P P P          P P P . P P P\n"
+            << "  P P P . P P P P          P P P P P P P\n"
+            << "  P P P P P P P P              P P P\n"
+            << "      P P P                    P P P\n"
             << "      P P P\n"
-            << "      P P P\n"
-            << "      P P P\n"
-            << "P P P P P P P P P\n"
-            << "P P P P . P P P P\n"
-            << "P P P P P P P P P\n"
-            << "      P P P\n"
-            << "      P P P\n"
-            << "      P P P\n"
-            << "\n\n";
-
-    cout    << "3- Asymmetrical\n"
-            << "---------------------\n"
-            << "    P P P\n"
-            << "    P P P\n"
-            << "    P P P\n"
-            << "P P P P P P P P\n"
-            << "P P P . P P P P\n"
-            << "P P P P P P P P\n"
-            << "    P P P\n"
-            << "    P P P\n"
-            << "    P P P\n"
-            << "\n\n";
+            << "\n";
     
-    cout    << "4- English\n"
-            << "---------------------\n"
-            << "    P P P\n"
-            << "    P P P\n"
-            << "P P P P P P P\n"
-            << "P P P . P P P\n"
-            << "P P P P P P P\n"
-            << "    P P P\n"
-            << "    P P P\n"
-            << "\n\n";
-
-    cout    << "5- Diamond\n"
-            << "---------------------\n"
-            << "        P\n"
-            << "      P P P\n"
-            << "    P P P P P\n"
-            << "  P P P P P P P\n"
-            << "P P P P . P P P P\n"
-            << "  P P P P P P P\n"
-            << "    P P P P P\n"
-            << "      P P P\n"
-            << "        P\n"
-            << "\n\n";
-
-    cout    << "6- Triangle\n"
-            << "---------------------\n"
-            << "        .\n"
-            << "      P   P\n"
-            << "    P   P   P\n"
-            << "  P   P   P   P\n"
-            << "P   P   P   P   P\n"
+    cout    << "5- Diamond               6- Triangle\n"
+            << "--------------------     --------------------\n"
+            << "          P                    .\n"
+            << "        P P P                 P P\n"
+            << "      P P P P P              P P P\n"
+            << "    P P P P P P P           P P P P\n"
+            << "  P P P P . P P P P        P P P P P\n"
+            << "    P P P P P P P\n"
+            << "      P P P P P\n"
+            << "        P P P\n"
+            << "          P\n"
             << "\n\n";
 }
 

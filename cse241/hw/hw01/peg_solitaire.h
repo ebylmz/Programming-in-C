@@ -5,14 +5,15 @@
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
+#define EXIT_SUDO    2
 
 using namespace std;
 
-typedef enum {empty, peg, out} CellState;
+enum class CellState {empty, peg, out};
 
-typedef enum {french = 1, german = 2, asymmetrical = 3, english = 4, diamond = 5, triangular = 6} BoardType;
+enum class BoardType {french = 1, german = 2, asymmetrical = 3, english = 4, diamond = 5, triangular = 6};
 
-typedef enum {up_d, down_d, right_d, left_d, upRight_d, upLeft_d, downRight_d, downLeft_d, none_d} Direction;
+enum class Direction {up, down, right, left, upRight, upLeft, downRight, downLeft, none};
 
 /***********************************************************************************
  * Game Management
@@ -24,7 +25,7 @@ void startHumanGame (vector<vector<CellState>> & board);
 
 void startComputerGame (vector<vector<CellState>> & board);
 
-void getMovement (const vector<vector<CellState>> & board, int & startRow, int & startCol, Direction & dir);
+int getMovement (int & startRow, int & startCol, Direction & dir);
 // Reads the movement from console and returns the movement as 
 // indexes of the start point and the direction of movement
 //? OPTIMIZATION NEEDED
@@ -33,6 +34,7 @@ Direction getDirection (string & movement);
 // Returns the Obtained direction information inside of the movement 
 
 string dirToStr (Direction dir);
+// Generate a string indicate an direction. Exp: U, D, L, R, UR ...
 
 int applyMovement (vector<vector<CellState>> & b, int startRow, int startCol, Direction dir);
 // Applies the movement, for invalid operation returns EXIT_FAILURE
@@ -51,6 +53,10 @@ bool isMovable (const vector<vector<CellState>> & board, int startRow, int start
 
 bool isMovable (const vector<vector<CellState>> & board, int startRow, int startCol, Direction dir);
 // Checks if given board cell is movable or not for specific direction
+
+bool isProperDirection (const vector<vector<CellState>> & board, Direction dir);
+
+bool isTriangularMovement (Direction dir);
 
 bool isDiagonalMovement (Direction dir);
 
@@ -76,6 +82,7 @@ bool isInBoard (const vector<vector<CellState>> & b, int row, int col);
 // Checks if given row and col is inside of the board
 
 bool isTriangularBoard (const vector<vector<CellState>> & b);
+//! DONT FORGET TO UPDATE AFTER IMPLEMENTING TRIANGULAR BOARD
 
 void printAllBoardTypes ();
 // Prints 6 different type of boards
