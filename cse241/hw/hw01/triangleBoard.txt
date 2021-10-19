@@ -35,9 +35,11 @@ A5 B5 C5 D5 E5
 
 
 // User interface
-        A    
-         B 
-1     .   C
-2    P P   D 
+         A    
+          B 
+1     .    C
+2    P P    D 
 3   P P P  
 4  P P P P
+   
+   A B C D

@@ -3,9 +3,9 @@
 #ifndef peg_solitaire
 #define peg_solitaire
 
-#define EXIT_SUCCESS 0
-#define EXIT_FAILURE 1
-#define EXIT_SUDO    2
+#define EXIT_SUCCESS 0  // return value for successfull execution
+#define EXIT_FAILURE 1  // return value for unsuccessfull execution
+#define EXIT_SUDO    2  // return value for stopped execution by user
 
 using namespace std;
 
@@ -25,12 +25,16 @@ void startHumanGame (vector<vector<CellState>> & board);
 
 void startComputerGame (vector<vector<CellState>> & board);
 
+int createRandomMovement (const vector<vector<CellState>> & board, int & startRow, int & startCol, Direction & dir);
+// In case of succesfull execution returns EXIT_SUCCESS, on the other hand
+// returns EXIT_FAILURE when the game is over and there is no valid movement remains
+
 int getMovement (int & startRow, int & startCol, Direction & dir);
 // Reads the movement from console and returns the movement as 
 // indexes of the start point and the direction of movement
 //? OPTIMIZATION NEEDED
 
-Direction getDirection (string & movement);
+Direction getDirection (const string & movement);
 // Returns the Obtained direction information inside of the movement 
 
 string dirToStr (Direction dir);
@@ -38,16 +42,15 @@ string dirToStr (Direction dir);
 
 int applyMovement (vector<vector<CellState>> & b, int startRow, int startCol, Direction dir);
 // Applies the movement, for invalid operation returns EXIT_FAILURE
-//! NOT IMPLEMENTED FOR TRIANGULAR BOARD
 
 void moveUp (int & jumpRow, int & targetRow);
 void moveDown (int & jumpRow, int & targetRow);
 void moveRight (int & jumpCol, int & targetCol);
 void moveLeft (int & jumpCol, int & targetCol);
-// Pre: jump and target Cells are should be equal to start Cell
+// Pre: jump and target Cells are should be initialized from start Cell
 
-int getMoveCell (int startRow, int startCol, Direction dir, int & jumpRow, int & jumpCol, int & targetRow, int & targetCol);
-//? Produce movement cell ..............
+int getMoveCell (const vector<vector<CellState>> & board, int startRow, int startCol, Direction dir, int & jumpRow, int & jumpCol, int & targetRow, int & targetCol);
+// Produce the movement cells (start, jump and target) from given start cell 
 
 bool isMovable (const vector<vector<CellState>> & board, int startRow, int startCol);
 // Checks if given board cell is movable or not
@@ -63,7 +66,7 @@ bool isDiagonalMovement (Direction dir);
 
 bool isGameOver (const vector<vector<CellState>> & board);
 
-int calculateScore (vector<vector<CellState>> & board);
+int calculateScore (const vector<vector<CellState>> & board);
 
 /***********************************************************************************
  * Board Start
@@ -90,13 +93,17 @@ void showBoard (const vector<vector<CellState>> & b);
 // Prints the curent status of board
 
 void showTriangularBoard (const vector<vector<CellState>> & b);
-//! NOT IMPLEMENTED YET
 
 void showNonTriangularBoard (const vector<vector<CellState>> & b);
 
+void printn (char c, int n);
+// Prints the given char for n times to the current line  
+
+char cellStateToChar (CellState cs);
+// Converts CellState type to it's char equivalent
+
 bool isInBoard (const vector<vector<CellState>> & b, int row, int col);
-// Checks if given row and col is inside of the board
-//! NOT IMPLEMENTED FOR TRIANGULAR BOARD
+// Checks if referred cell with it's row and col is inside of the board
 
 bool isTriangularBoard (const vector<vector<CellState>> & b);
 
@@ -107,19 +114,22 @@ void printAllBoardTypes ();
  * Utility
  **********************************************************************************/
 void throwError (string prompt);
-
-void throwError (string prompt, string location);
+//! ADD exit keyword
 
 bool getChoice (string prompt);
-// Takes an prompt for Y/N question, and returns it's answer
+// Prompt the user a Y/N question and returns it's value Y for true, N for false  
 
 int getChoice (string prompt, int lb, int ub);
-//? Takes an prompt and returns it's answer 
+// Prompt the user and returns its value specified with range [lb, ub] 
 
-int getChoice (string in_prompt, string err_prompt, int lb, int ub);
-//? Takes an prompt and returns it's answer 
+int getChoice (string inPrompt, string errPrompt, int lb, int ub);
+// Prompt the user and returns its value specified with range [lb, ub]
+// In case of invalid input alerts given errPrompt 
 
-bool isNumber (char c);
+bool isInRange (int n, int lb, int ub);
+// Checks if given integer n in inside of the boundry [lb, ub]
+
+bool isDigit (char c);
 
 bool isLetter (char c);
 
