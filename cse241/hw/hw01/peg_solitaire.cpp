@@ -1,3 +1,14 @@
+/**
+ * @file    peg_solitaire.cpp
+ * @author  Emirkan Burak Yilmaz (emirkanyilmaz2019@gtu.edu.tr)
+ * @brief   Implementation of Peg Solitaire library
+ * @version 0.1
+ * @date    2021-10-19
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -72,16 +83,16 @@ void startHumanGame (vector<vector<CellState>> & board) {
         Direction dir;
 
         r = getMovement(startRow, startCol, dir);
-        if (r != EXIT_SUDO) {
+        if (r != RETURN_SUDO) {
             r = applyMovement(board, startRow, startCol, dir);
-            if (r == EXIT_SUCCESS)
+            if (r == RETURN_SUCCESS)
                 showBoard(board);
             else
                 throwError("Invalid Move");
         }
         else 
             cout << "Game is ended\n";
-    } while (r != EXIT_SUDO && (r == EXIT_FAILURE || isGameOver(board) == false));
+    } while (r != RETURN_SUDO && (r == RETURN_FAILURE || isGameOver(board) == false));
 }
 
 void startComputerGame (vector<vector<CellState>> & board) {
@@ -89,7 +100,7 @@ void startComputerGame (vector<vector<CellState>> & board) {
     Direction dir;
 
     showBoard(board);
-    while (createRandomMovement(board, startRow, startCol, dir) == EXIT_SUCCESS) {
+    while (createRandomMovement(board, startRow, startCol, dir) == RETURN_SUCCESS) {
         // Print the movement made by computer
         cout << "Movement: " << static_cast<char>('A' + startCol) << static_cast<char>('1' + startRow) << '-' << dirToStr(dir) << endl;
         applyMovement(board, startRow, startCol, dir);
@@ -113,10 +124,10 @@ int createRandomMovement (const vector<vector<CellState>> & board, int & startRo
             else
                 dir = static_cast<Direction>(rand() % 4);
         } while (isMovable(board, startRow, startCol, dir) == false);
-        r = EXIT_SUCCESS; 
+        r = RETURN_SUCCESS; 
     }
     else
-        r = EXIT_FAILURE;
+        r = RETURN_FAILURE;
     return r;
 }
 
@@ -129,10 +140,10 @@ int getMovement (int & startRow, int & startCol, Direction & dir) {
         convertUpperCase(mov);
 
         if (mov == "EXIT")
-            r = EXIT_SUDO;
+            r = RETURN_SUDO;
         else {
             // Set failure flag up in case of an errror
-            r = EXIT_FAILURE;
+            r = RETURN_FAILURE;
 
             // Check if entered movement is in a proper format
             if ((mov.length() == 4 || mov.length() == 5) && isLetter(mov[0]) && isDigit(mov[1]) && mov[2] == '-') {
@@ -140,11 +151,11 @@ int getMovement (int & startRow, int & startCol, Direction & dir) {
                 startRow = mov[1] - '1';
 
                 dir = getDirection(mov);
-                if (dir != Direction::none) r = EXIT_SUCCESS; 
+                if (dir != Direction::none) r = RETURN_SUCCESS; 
             }
         }
-        if (r == EXIT_FAILURE) throwError("Invalid movement format");
-    } while (r == EXIT_FAILURE); 
+        if (r == RETURN_FAILURE) throwError("Invalid movement format");
+    } while (r == RETURN_FAILURE); 
     return r;
 }
 
@@ -225,7 +236,7 @@ string dirToStr (Direction dir) {
 }
 
 int applyMovement (vector<vector<CellState>> & board, int startRow, int startCol, Direction dir) {
-    int r = EXIT_FAILURE;
+    int r = RETURN_FAILURE;
 
     // up/down movements are invalid for triangular board 
     // diagonal movements are invalid for all the boards except triangular board 
@@ -239,7 +250,7 @@ int applyMovement (vector<vector<CellState>> & board, int startRow, int startCol
             board[startRow][startCol] = CellState::empty;
             board[jumpRow][jumpCol] = CellState::empty;
             board[targetRow][targetCol] = CellState::peg;
-            r = EXIT_SUCCESS;
+            r = RETURN_SUCCESS;
 
             cout << "_____________________________" << endl;
             cout << "start  " << '[' << startRow << ", " << startCol << ']' << endl;
@@ -251,7 +262,7 @@ int applyMovement (vector<vector<CellState>> & board, int startRow, int startCol
 }
 
 int getMoveCell (const vector<vector<CellState>> & board, int startRow, int startCol, Direction dir, int & jumpRow, int & jumpCol, int & targetRow, int & targetCol) {
-    int r = EXIT_SUCCESS;
+    int r = RETURN_SUCCESS;
 
     // Pre condition for move... functions
     jumpRow = targetRow = startRow;
@@ -284,7 +295,7 @@ int getMoveCell (const vector<vector<CellState>> & board, int startRow, int star
                 moveLeft(jumpCol, targetCol);
             moveDown(jumpRow, targetRow); break;
         default:
-            r = EXIT_FAILURE;
+            r = RETURN_FAILURE;
     }
 
     return r;
@@ -336,7 +347,7 @@ bool isMovable (const vector<vector<CellState>> & board, int startRow, int start
         int v, jumpRow, jumpCol, targetRow, targetCol;
         v = getMoveCell(board, startRow, startCol, dir, jumpRow, jumpCol, targetRow, targetCol);
         
-        r = v == EXIT_SUCCESS                               &&
+        r = v == RETURN_SUCCESS                               &&
             isInBoard(board, startRow, startCol)            && 
             board[startRow][startCol] == CellState::peg     &&
             isInBoard(board, jumpRow, jumpCol)              && 

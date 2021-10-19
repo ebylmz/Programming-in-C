@@ -1,13 +1,13 @@
-all: test
+all: main
 
-test: test.o peg_solitaire.o
-	g++ test.o peg_solitaire.o -o test
+main: main.o peg_solitaire.o
+	g++ main.o peg_solitaire.o -o main
 
-test.o: test.cpp
-	g++ --std=c++11 test.cpp -c
+main.o: main.cpp
+	g++ --std=c++11 main.cpp -c
 
 peg_solitaire.o: peg_solitaire.cpp
 	g++ --std=c++11 peg_solitaire.cpp -c
 
 clean:
-	rm -f *.o test
+	rm -f *.o main

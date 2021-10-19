@@ -1,13 +1,24 @@
-// http://recmath.org/pegsolitaire/
+/**
+ * @file    peg_solitaire.h
+ * @author  Emirkan Burak Yilmaz (emirkanyilmaz2019@gtu.edu.tr)
+ * @brief   Header File of Peg Solitaire library
+ * @version 0.1
+ * @date    2021-10-19
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
+
+//! http://recmath.org/pegsolitaire/
 
 #ifndef peg_solitaire
 #define peg_solitaire
 
-#define EXIT_SUCCESS 0  // return value for successfull execution
-#define EXIT_FAILURE 1  // return value for unsuccessfull execution
-#define EXIT_SUDO    2  // return value for stopped execution by user
-
 using namespace std;
+
+const int RETURN_SUCCESS = 0;  // return value for successfull execution
+const int RETURN_FAILURE = 1;  // return value for unsuccessfull execution
+const int RETURN_SUDO    = 2;  // return value for stopped execution by user
 
 enum class CellState {empty, peg, out};
 
@@ -26,7 +37,7 @@ void startHumanGame (vector<vector<CellState>> & board);
 void startComputerGame (vector<vector<CellState>> & board);
 
 int createRandomMovement (const vector<vector<CellState>> & board, int & startRow, int & startCol, Direction & dir);
-// In case of succesfull execution returns EXIT_SUCCESS, on the other hand
+// In case of succesfull execution returns RETURN_SUCCESS, on the other hand
 // returns EXIT_FAILURE when the game is over and there is no valid movement remains
 
 int getMovement (int & startRow, int & startCol, Direction & dir);
