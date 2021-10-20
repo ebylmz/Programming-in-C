@@ -9,16 +9,14 @@
  * 
  */
 
-//! http://recmath.org/pegsolitaire/
-
 #ifndef peg_solitaire
 #define peg_solitaire
 
 using namespace std;
 
-const int RETURN_SUCCESS = 0;  // return value for successfull execution
-const int RETURN_FAILURE = 1;  // return value for unsuccessfull execution
-const int RETURN_SUDO    = 2;  // return value for stopped execution by user
+const int RETURN_SUCCESS =  0;  // return value for successfull execution
+const int RETURN_FAILURE = -1;  // return value for unsuccessfull execution
+const int RETURN_SUDO    = -2;  // return value for stopped execution by user
 
 enum class CellState {empty, peg, out};
 
@@ -79,6 +77,12 @@ bool isGameOver (const vector<vector<CellState>> & board);
 
 int calculateScore (const vector<vector<CellState>> & board);
 
+void welcomeGreet();
+// Prints welcome message for the gamer
+
+void showGameRules ();
+// Prints the rule of the games
+
 /***********************************************************************************
  * Board Start
  **********************************************************************************/
@@ -125,7 +129,6 @@ void printAllBoardTypes ();
  * Utility
  **********************************************************************************/
 void throwError (string prompt);
-//! ADD exit keyword
 
 bool getChoice (string prompt);
 // Prompt the user a Y/N question and returns it's value Y for true, N for false  
@@ -136,6 +139,15 @@ int getChoice (string prompt, int lb, int ub);
 int getChoice (string inPrompt, string errPrompt, int lb, int ub);
 // Prompt the user and returns its value specified with range [lb, ub]
 // In case of invalid input alerts given errPrompt 
+
+string BoardTypeToStr (BoardType btype);
+// Returns the name of the given board 
+
+int strToInt (string & s);
+// Converts string to integer value 
+// Returns RETURN_FAILURE existance of nondigit charachter  
+
+void showNextPageEffect ();
 
 bool isInRange (int n, int lb, int ub);
 // Checks if given integer n in inside of the boundry [lb, ub]

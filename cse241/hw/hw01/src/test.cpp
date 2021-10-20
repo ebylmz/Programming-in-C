@@ -1,7 +1,7 @@
 /**
- * @file    main.cpp
+ * @file    test.cpp
  * @author  Emirkan Burak Yilmaz (emirkanyilmaz2019@gtu.edu.tr)
- * @brief   Main
+ * @brief   Testing Peg Solitaire Game
  * @version 0.1
  * @date    2021-10-19
  * 

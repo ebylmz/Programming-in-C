@@ -27,51 +27,69 @@ void pegStart () {
     int choice;
     bool playAgain;
 
+    welcomeGreet();
+    showGameRules();
+
     do {
         vector<vector<CellState>> board;
         BoardType btype;
 
         // Ask the board type and initialize the board
         printAllBoardTypes();
-        choice = getChoice("Select your board(0 for random board): ", 0, 6);
+        cout << "0. Exit\n"
+             << "1. French\n"
+             << "2. German\n"
+             << "3. Asymmetrical\n"
+             << "4. English\n"
+             << "5. Diamond\n"
+             << "6. Triangle\n"
+             << "7. Random Board\n";
+        choice = getChoice("Select your board: ", 0, 7);
         
         if (choice == 0) {
-            srand(time(NULL));
-            choice = rand() % 6 + 1;
-            cout << choice << ". board selected randomly\n";
+            playAgain = false;
+            showNextPageEffect();
         }
+        else {
+            if (choice == 7) {
+                // Select a random board
+                srand(time(NULL));
+                choice = rand() % 6 + 1;
+                string randBoard = BoardTypeToStr(static_cast<BoardType>(choice));
+                cout << endl << randBoard << " board selected randomly\n";
+            }
 
-        btype = static_cast<BoardType>(choice);
-        initBoard(board, btype);
+            btype = static_cast<BoardType>(choice);
+            initBoard(board, btype);
 
-        // There are two types of game: human & computer
-        cout << "______________________" << endl
-             << "0. Exit\n"
-             << "1. Human Game\n"
-             << "2. Computer Game\n";
-        choice = getChoice("Select the game type: ", 0, 2);
+            // There are two types of game: human & computer
+            showNextPageEffect();
+            cout << "0. Come Back Main Menu\n"
+                 << "1. Human Game\n"
+                 << "2. Computer Game\n";
+            choice = getChoice("Select the game type: ", 0, 2);
 
-        switch (choice) {
-            case 0:
-                playAgain = false;
-                break;
-            case 1:
-                startHumanGame(board);
-                break;
-            case 2:
-                startComputerGame(board);
-                break;
-        }
-        
-        if (choice != 0) {
-            showBoard(board);
-            // Calculate and print the score, ask for play again
-            cout << "______________________\n"
-                 << "\nGame is Over!\n" 
-                 << "Score: " << calculateScore(board) << endl;
-            playAgain = getChoice("Do you want to play again(Y/N): ");
-        }
+            switch (choice) {
+                case 0:
+                    // Come Back Main Menu
+                    playAgain = true;         break;
+                case 1:
+                    startHumanGame(board);    break;
+                case 2:
+                    startComputerGame(board); break;
+            }
+            
+            if (choice != 0) {
+                // Calculate and print the score, ask for play again
+                showNextPageEffect();
+                cout << "\nGame is Over!\n" 
+                     << "Score: " << calculateScore(board) << "\n\n";
+                playAgain = getChoice("Do you want to play again(Y/N): ");
+                showNextPageEffect();
+            }
+        } 
     } while (playAgain == true);
+    cout << "EXIT\n";
 }
 
 void startHumanGame (vector<vector<CellState>> & board) {
@@ -90,8 +108,6 @@ void startHumanGame (vector<vector<CellState>> & board) {
             else
                 throwError("Invalid Move");
         }
-        else 
-            cout << "Game is ended\n";
     } while (r != RETURN_SUDO && (r == RETURN_FAILURE || isGameOver(board) == false));
 }
 
@@ -154,7 +170,8 @@ int getMovement (int & startRow, int & startCol, Direction & dir) {
                 if (dir != Direction::none) r = RETURN_SUCCESS; 
             }
         }
-        if (r == RETURN_FAILURE) throwError("Invalid movement format");
+        if (r == RETURN_FAILURE)
+            throwError("Invalid movement format");
     } while (r == RETURN_FAILURE); 
     return r;
 }
@@ -251,11 +268,7 @@ int applyMovement (vector<vector<CellState>> & board, int startRow, int startCol
             board[jumpRow][jumpCol] = CellState::empty;
             board[targetRow][targetCol] = CellState::peg;
             r = RETURN_SUCCESS;
-
-            cout << "_____________________________" << endl;
-            cout << "start  " << '[' << startRow << ", " << startCol << ']' << endl;
-            cout << "jump   " << '[' << jumpRow << ", " << jumpCol << ']' << endl;
-            cout << "target " << '[' << targetRow << ", " << targetCol << ']' << "" << endl;
+            showNextPageEffect();
         }
     }
     return r;
@@ -406,6 +419,71 @@ int calculateScore (const vector<vector<CellState>> & board) {
                 ++score;
 
     return score;
+}
+
+void showGameRules () {
+    char c;
+    cout << "Direction Commands\n"
+         << "=============================================\n\n"
+         << " U: Up                 U\n"
+         << " D: Down           UL  |  UR\n"
+         << " L: Left        L -----|----- R\n"
+         << " R: Right          DL  |  DR\n"
+         << "                       D\n\n";
+
+    cout << "Game Rules\n"
+         << "=============================================\n\n";
+
+    cout << "Triangular Board\n"
+         << "---------------------------------------------\n"
+         << "Interface                  Notation\n" 
+         << "------------------         ------------------ \n"  
+         << "         A\n"
+         << "          B\n"
+         << "1      .   C                       A1\n"
+         << "2     P P   D                    A2  B2\n"
+         << "3    P P P   E                 A3  B3  C3\n"
+         << "4   P P P P                  A4  B4  C4  D4\n"
+         << "5  P P P P P               A5  B5  C5  D5  E5\n\n"
+         << "// U and D movements are invalid for triangular board\n\n";
+
+    cout << "Non-Triangular Board\n"
+         << "---------------------------------------------\n"
+         << "Interface                  Notation\n" 
+         << "------------------         ------------------\n"  
+         << "   A B C D E F G\n\n"
+         << "1      P P P                     C1 D1 E1\n"
+         << "2    P P P P P                B2 C2 D2 E2 F2\n"
+         << "3  P P P . P P P           A3 B3 C3 D3 E3 F3 G3\n"
+         << "4  P P P P P P P           A4 B4 C4 D4 E4 F4 G4\n"
+         << "5  P P P P P P P           A5 B5 C5 D5 E5 F5 G5\n"
+         << "6    P P P P P                B6 C6 D6 E6 F6\n"
+         << "7      P P P                     C7 D7 E7\n\n"
+         << "// Diagonal movements(UL, DL, UR, DR) are invalid for non-triangular board\n\n";
+
+    cout << "Example Movements\n"
+         << "=============================================\n\n"
+         << "Diagonal Movements\n"
+         << "------------------\n"
+         << "A3-UR: Select cell at coloumn A, row 3 and move to the Up-Right\n"
+         << "B3-DL: Select cell at coloumn B, row 3 and move to the Down-Left\n\n"
+         << "Direct Movements:\n"
+         << "------------------\n"
+         << "C6-U : Select cell at coloumn C, row 6 and move to the Up\n"
+         << "E5-R : Select cell at coloumn E, row 5 and move to the Right\n\n"
+         << "EXIT Command:\n"
+         << "------------------\n"
+         << "// Type EXIT to exit the movement screen\n\n";
+    
+    cout << "Enter to continue ";
+    cin.get(c);
+    cout << "\n\n";
+}
+
+void welcomeGreet () {
+    cout << "**************************************************\n"
+         << "*            WELCOME TO PEG SOLITAIRE            *\n"
+         << "**************************************************\n\n";
 }
 
 /***********************************************************************************
@@ -599,7 +677,6 @@ void showTriangularBoard (const vector<vector<CellState>> & b) {
         }
         cout << endl;
     }
-    cout << endl;
 }
 
 void showNonTriangularBoard (const vector<vector<CellState>> & b) {
@@ -702,7 +779,7 @@ void printAllBoardTypes () {
 }
 
 /***********************************************************************************
- * Utility
+ * Utility 
  **********************************************************************************/
 
 void throwError (string prompt) {
@@ -710,33 +787,96 @@ void throwError (string prompt) {
 }
 
 bool getChoice (string prompt) {
+    bool exit = false;
+    string s;
     char c;
 
     cout << prompt;
-    for (cin >> c, c = upperCase(c); c != 'Y' && c != 'N'; cin >> c, c = upperCase(c))
-        cout << "Please select a proper choose: ";
-
+    do {
+        cin >> s;
+        c = upperCase(s[0]);
+        
+        if (c == 'Y' || c == 'N')
+            exit = true;
+        else
+            cout << "Please select a proper choose: ";
+    } while (exit == false);
     return c == 'Y' ? true : false;
 }
 
 int getChoice (string prompt, int lb, int ub) {
+    bool exit = false;
+    string s;
     int r;
     
     cout << prompt;    
-    for (cin >> r; r < lb || r > ub; cin >> r)
-        cout << "Please select a proper choose: ";
+    do {
+        cin >> s;
+        r = strToInt(s);
 
+        if (r != RETURN_FAILURE && isInRange(r, lb, ub))
+            exit = true;
+        else
+            cout << "Please select a proper choose: ";
+    } while (exit == false);
     return r;    
 }
 
 int getChoice (string inPrompt, string errPrompt, int lb, int ub) {
-    int r;    
+    bool exit = false;
+    string s;
+    int r;
+    
+    cout << inPrompt;    
+    do {
+        cin >> s;
+        r = strToInt(s);
 
-    cout << inPrompt;
-    for (cin >> r; r < lb || r > ub; cin >> r)
-        cout << errPrompt << endl
-             << "Please select a proper choose: ";
+        if (r != RETURN_FAILURE && isInRange(r, lb, ub))
+            exit = true;
+        else
+            cout << errPrompt << endl
+                 << "Please select a proper choose: ";
+    } while (exit == false);
     return r;
+}
+
+string BoardTypeToStr (BoardType btype) {
+    string s;
+    switch (btype) {
+        case BoardType::french:
+            s = "French";       break;
+        case BoardType::german:
+            s = "German";       break;
+        case BoardType::asymmetrical:
+            s = "Asymmetrical"; break;
+        case BoardType::english:
+            s = "English";      break;
+        case BoardType::diamond:
+            s = "Diamond";      break;
+        case BoardType::triangular:
+            s = "Triangular";   break;
+        default:
+            throwError("Undefined board type");
+    }
+    return s;
+}
+
+int strToInt (string & s) {
+    int r = 0;
+
+    // RETURN_FAILURE is negative constant value
+    for (int i = 0; i < s.length() && r != RETURN_FAILURE; ++i)
+        if (isDigit(s[i]))
+            r = r * 10 + s[i] - '0';
+        else 
+            r = RETURN_FAILURE;
+
+    return r;
+}
+
+void showNextPageEffect () {
+    cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n";
 }
 
 bool isInRange (int n, int lb, int ub) {
