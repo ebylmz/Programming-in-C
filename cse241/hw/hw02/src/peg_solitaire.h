@@ -2,8 +2,8 @@
  * @file    peg_solitaire.h
  * @author  Emirkan Burak Yilmaz (emirkanyilmaz2019@gtu.edu.tr)
  * @brief   Header File of Peg Solitaire library
- * @version 0.1
- * @date    2021-10-19
+ * @version 0.2
+ * @date    2021-10-27
  * 
  * @copyright Copyright (c) 2021
  * 
@@ -30,18 +30,21 @@ enum class Direction {up, down, right, left, upRight, upLeft, downRight, downLef
 
 void pegStart ();
 
-void startHumanGame (vector<vector<CellState>> & board);
+void startNewGame ();
 
-void startComputerGame (vector<vector<CellState>> & board);
+void continueGame ();
+
+void playHumanMode (vector<vector<CellState>> & board);
+
+void playComputerMode (vector<vector<CellState>> & board);
 
 int createRandomMovement (const vector<vector<CellState>> & board, int & startRow, int & startCol, Direction & dir);
 // In case of succesfull execution returns RETURN_SUCCESS, on the other hand
 // returns EXIT_FAILURE when the game is over and there is no valid movement remains
 
-int getMovement (int & startRow, int & startCol, Direction & dir);
+int getMovement (const string & mov, int & startRow, int & startCol, Direction & dir);
 // Reads the movement from console and returns the movement as 
 // indexes of the start point and the direction of movement
-//? OPTIMIZATION NEEDED
 
 Direction getDirection (const string & movement);
 // Returns the Obtained direction information inside of the movement 
@@ -104,6 +107,9 @@ void initBoardTriangular(vector<vector<CellState>> & board);
 void createBoard (vector<vector<CellState>> & b, int row, int col, CellState c);
 // Creates a board as given dimension and initiliaze all the board with c
 
+void showGameStatus (const vector<vector<CellState>> & board, int numberOfMoves, char gameMode);
+//! NEW
+
 void showBoard (const vector<vector<CellState>> & b);
 // Prints the curent status of board
 
@@ -124,6 +130,22 @@ bool isTriangularBoard (const vector<vector<CellState>> & b);
 
 void printAllBoardTypes ();
 // Prints 6 different type of boards
+
+/***********************************************************************************
+ * Load(Import) & Save(Export)  
+ **********************************************************************************/
+int saveGame (const vector<vector<CellState>> & board, const char * fileName, int numberofMoves, char gameMode);
+//! NOT IMPLEMENTED PROPERLY
+
+int loadGame (vector<vector<CellState>> & board, const char * fileName, int & numberOfMoves, char & gameMode);
+//! NOT IMPLEMENTED PROPERLY
+
+int importBoard (vector<vector<CellState>> & b, ifstream & inStream);
+//! NOT IMPLEMENTED PROPERLY
+
+void exportBoard(const vector<vector<CellState>> & b, ofstream & outStream);
+//! NOT IMPLEMENTED PROPERLY
+
 
 /***********************************************************************************
  * Utility

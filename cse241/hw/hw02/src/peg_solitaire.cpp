@@ -2,8 +2,8 @@
  * @file    peg_solitaire.cpp
  * @author  Emirkan Burak Yilmaz (emirkanyilmaz2019@gtu.edu.tr)
  * @brief   Implementation of Peg Solitaire library
- * @version 0.1
- * @date    2021-10-19
+ * @version 0.2
+ * @date    2021-10-27
  * 
  * @copyright Copyright (c) 2021
  * 
@@ -12,6 +12,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <fstream>
 #include <cstdlib>
 #include <ctime>
 #include <cmath>
@@ -24,103 +25,190 @@ using namespace std;
  **********************************************************************************/
 
 void pegStart () {
+    bool exit = false;
     int choice;
-    bool playAgain;
 
     welcomeGreet();
+    cout << "\nEnter to start ";
+    cin.get();
     showGameRules();
 
     do {
-        vector<vector<CellState>> board;
-        BoardType btype;
-
-        // Ask the board type and initialize the board
-        printAllBoardTypes();
+        // Main Menu
         cout << "0. Exit\n"
-             << "1. French\n"
-             << "2. German\n"
-             << "3. Asymmetrical\n"
-             << "4. English\n"
-             << "5. Diamond\n"
-             << "6. Triangle\n"
-             << "7. Random Board\n";
-        choice = getChoice("Select your board: ", 0, 7);
-        
-        if (choice == 0) {
-            playAgain = false;
-            showNextPageEffect();
+             << "1. Start New Game\n"
+             << "2. Continue Game\n";
+        choice = getChoice("Choose: ", 0, 2);
+
+        switch (choice) {
+            case 0:
+                exit = getChoice("Are you sure (y or n) ");
+                break;
+            case 1:
+                startNewGame(); break;
+            case 2:
+                continueGame(); break;
+                break;
         }
-        else {
-            if (choice == 7) {
-                // Select a random board
-                srand(time(NULL));
-                choice = rand() % 6 + 1;
-                string randBoard = BoardTypeToStr(static_cast<BoardType>(choice));
-                cout << endl << randBoard << " board selected randomly\n";
-            }
-
-            btype = static_cast<BoardType>(choice);
-            initBoard(board, btype);
-
-            // There are two types of game: human & computer
-            showNextPageEffect();
-            cout << "0. Come Back Main Menu\n"
-                 << "1. Human Game\n"
-                 << "2. Computer Game\n";
-            choice = getChoice("Select the game type: ", 0, 2);
-
-            switch (choice) {
-                case 0:
-                    // Come Back Main Menu
-                    playAgain = true;         break;
-                case 1:
-                    startHumanGame(board);    break;
-                case 2:
-                    startComputerGame(board); break;
-            }
-            
-            if (choice != 0) {
-                // Calculate and print the score, ask for play again
-                showNextPageEffect();
-                cout << "\nGame is Over!\n" 
-                     << "Score: " << calculateScore(board) << "\n\n";
-                playAgain = getChoice("Do you want to play again(Y/N): ");
-                showNextPageEffect();
-            }
-        } 
-    } while (playAgain == true);
+    } while (! exit);
     cout << "EXIT\n";
 }
 
-void startHumanGame (vector<vector<CellState>> & board) {
-    int r;
+void startNewGame () {
+    vector<vector<CellState>> board;
+    BoardType btype;
+    int choice;
 
-    showBoard(board);
+    // Ask the board type and initialize the board
+    printAllBoardTypes();
+    cout << "0. Exit\n"
+         << "1. French\n"
+         << "2. German\n"
+         << "3. Asymmetrical\n"
+         << "4. English\n"
+         << "5. Diamond\n"
+         << "6. Triangle\n"
+         << "7. Random Selection\n";
+    choice = getChoice("Select your board: ", 0, 7);
+    
+    if (choice == 7) {
+        // Select a random board
+        srand(time(NULL));
+        choice = rand() % 6 + 1;
+        string randBoard = BoardTypeToStr(static_cast<BoardType>(choice));
+        cout << endl << randBoard << " board selected randomly\n";
+    }
+
+    btype = static_cast<BoardType>(choice);
+    initBoard(board, btype);
+
+    // There are two types of game: Human & Computer
+    showNextPageEffect();
+    cout << "0. Come Back to Main Menu\n"
+         << "1. Human Game\n"
+         << "2. Computer Game\n";
+    choice = getChoice("Select the game type: ", 0, 2);
+
+    if (choice != 0) {
+        switch (choice) {
+            case 1:
+                playHumanMode(board);    break;
+            case 2:
+                playComputerMode(board); break;
+        }
+        // Calculate and print the score, ask for play again
+        showNextPageEffect();
+        cout << "\nGame is Over!\n" 
+             << "Score: " << calculateScore(board) << "\n\n";
+        showNextPageEffect();
+    }
+}
+
+void continueGame () {
+    vector<vector<CellState>> board;
+    char fileName[100];
+    ifstream inStream;
+    int r;
+    int numberOfMoves;
+    char gameMode;
+
+    // Load the game configuration 
+    do {
+        cout << "File name: ";
+        cin >> fileName;
+        if (upperCase(fileName[0]) == 'E' && upperCase(fileName[1]) == 'X' && upperCase(fileName[2]) == 'I' && upperCase(fileName[3]) == 'T')
+            r = RETURN_SUDO;
+        else {
+            r = loadGame(board, fileName, numberOfMoves, gameMode);
+            if (r != RETURN_SUCCESS)
+                throwError("Board was unable to load correctly");
+                //! NOT IMPLEMENTED YET
+        }
+    } while (r == RETURN_FAILURE);
+
+    //* Lets assume we open the file and import the board configuration
+    switch (gameMode) {
+        case 'C': 
+            playComputerMode(board);  break;
+        case 'H': 
+            playHumanMode(board);     break;
+    }
+}
+
+void playHumanMode (vector<vector<CellState>> & board) {
+    int r;
+    int numberOfMoves = 0;
+    char gameMode = 'H';
+
+    showGameStatus(board, 0, 'H');
+
     do {
         int startRow, startCol;
+        char fileName[100];
+        bool exit = false;
+        string strMov;
         Direction dir;
 
-        r = getMovement(startRow, startCol, dir);
-        if (r != RETURN_SUDO) {
+        cout << "\nMovement: ";
+        cin >> strMov;
+        convertUpperCase(strMov);
+
+        if (getMovement(strMov, startRow, startCol, dir) == RETURN_SUCCESS) {
             r = applyMovement(board, startRow, startCol, dir);
             if (r == RETURN_SUCCESS)
-                showBoard(board);
+                showGameStatus(board, ++numberOfMoves, 'H');
             else
-                throwError("Invalid Move");
+                r = RETURN_FAILURE;
         }
+        else if (strMov[0] == 'S' && strMov[1] == 'A' && strMov[2] == 'V' && strMov[3] == 'E') {
+            cin >> fileName;
+            r = saveGame(board, fileName, numberOfMoves, gameMode);
+            if (r == RETURN_SUCCESS)
+                cout << "Saved successfuly\n";
+        }
+        else if (strMov[0] == 'L' && strMov[1] == 'O' && strMov[2] == 'A' && strMov[3] == 'D') {
+            cin >> fileName;
+            r = loadGame(board, fileName, numberOfMoves, gameMode);
+            if (r == RETURN_SUCCESS) {
+                cout << "Loaded successfuly\n";
+                showGameStatus(board, numberOfMoves, 'H');
+            }
+            else
+                r = RETURN_FAILURE;
+        }
+        else if (strMov == "EXIT") {
+            bool c = getChoice("Are you sure you want to exit the game without saving your progress(y or n) ");
+            if (c == false) {
+                cout << "Enter the file name: ";
+                cin >> fileName;
+                saveGame(board, fileName, numberOfMoves, gameMode);
+            }
+            r = RETURN_SUDO;
+        }
+        else 
+            r = RETURN_FAILURE;
+        
+        if (r == RETURN_FAILURE)
+            throwError("Invalid movement format");
     } while (r != RETURN_SUDO && (r == RETURN_FAILURE || isGameOver(board) == false));
 }
 
-void startComputerGame (vector<vector<CellState>> & board) {
-    int startRow, startCol; 
+void playComputerMode (vector<vector<CellState>> & board) {
+    int startRow, startCol, numberOfMoves = 0; 
     Direction dir;
 
-    showBoard(board);
+    // showBoard(board);
+    showGameStatus(board, 0, 'C');
     while (createRandomMovement(board, startRow, startCol, dir) == RETURN_SUCCESS) {
         // Print the movement made by computer
-        cout << "Movement: " << static_cast<char>('A' + startCol) << static_cast<char>('1' + startRow) << '-' << dirToStr(dir) << endl;
+        cout << "\nNext Movement: " << static_cast<char>('A' + startCol) << static_cast<char>('1' + startRow) << '-' << dirToStr(dir) << endl;
         applyMovement(board, startRow, startCol, dir);
-        showBoard(board);
+        cout << "Enter to continue ";
+        cin.get();
+        cout << "\n";
+
+        // showBoard(board);
+        showGameStatus(board, ++numberOfMoves, 'C');
     }
 }
 
@@ -147,32 +235,17 @@ int createRandomMovement (const vector<vector<CellState>> & board, int & startRo
     return r;
 }
 
-int getMovement (int & startRow, int & startCol, Direction & dir) {
-    int r;
-    string mov;
-    do {
-        cout << "\nMovement: ";
-        cin >> mov;
-        convertUpperCase(mov);
+int getMovement (const string & mov, int & startRow, int & startCol, Direction & dir) {
+    int r = RETURN_FAILURE;
+    // Check if given movement is in a proper format
+    if ((mov.length() == 4 || mov.length() == 5) && isLetter(mov[0]) && isDigit(mov[1]) && mov[2] == '-') {
+        startCol = mov[0] - 'A';
+        startRow = mov[1] - '1';
 
-        if (mov == "EXIT")
-            r = RETURN_SUDO;
-        else {
-            // Set failure flag up in case of an errror
-            r = RETURN_FAILURE;
-
-            // Check if entered movement is in a proper format
-            if ((mov.length() == 4 || mov.length() == 5) && isLetter(mov[0]) && isDigit(mov[1]) && mov[2] == '-') {
-                startCol = mov[0] - 'A';
-                startRow = mov[1] - '1';
-
-                dir = getDirection(mov);
-                if (dir != Direction::none) r = RETURN_SUCCESS; 
-            }
-        }
-        if (r == RETURN_FAILURE)
-            throwError("Invalid movement format");
-    } while (r == RETURN_FAILURE); 
+        dir = getDirection(mov);
+        if (dir != Direction::none) 
+            r = RETURN_SUCCESS; 
+    }
     return r;
 }
 
@@ -422,7 +495,6 @@ int calculateScore (const vector<vector<CellState>> & board) {
 }
 
 void showGameRules () {
-    char c;
     cout << "Direction Commands\n"
          << "=============================================\n\n"
          << " U: Up                 U\n"
@@ -476,14 +548,14 @@ void showGameRules () {
          << "// Type EXIT to exit the movement screen\n\n";
     
     cout << "Enter to continue ";
-    cin.get(c);
+    cin.get();
     cout << "\n\n";
 }
 
 void welcomeGreet () {
-    cout << "**************************************************\n"
-         << "*            WELCOME TO PEG SOLITAIRE            *\n"
-         << "**************************************************\n\n";
+    cout << "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"
+         << "|            WELCOME TO PEG SOLITAIRE             |\n"
+         << "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n";
 }
 
 /***********************************************************************************
@@ -632,12 +704,21 @@ void createBoard (vector<vector<CellState>> & b, int row, int col, CellState c) 
     }
 }
 
+void showGameStatus (const vector<vector<CellState>> & board, int numberOfMoves, char gameMode) {
+    cout << "\n-----------------------------\n"
+         << "Game Mode: " << (gameMode == 'C' ? "Computer" : "Human") << endl
+         << "Number of Moves: " << numberOfMoves << endl
+         << "-----------------------------\n";
+    showBoard(board);
+}
+
 void showBoard (const vector<vector<CellState>> & b) {
     if (isTriangularBoard(b))
         showTriangularBoard(b);
     else 
         showNonTriangularBoard(b);
 }
+
 
 /**
  * @brief: Triangular Board Representation 
@@ -681,11 +762,17 @@ void showTriangularBoard (const vector<vector<CellState>> & b) {
 
 void showNonTriangularBoard (const vector<vector<CellState>> & b) {
     int padding = 3;
+    int colMax = 0;
+
+    // Define the max column number
+    for (int i = 0; i < b.size(); ++i)
+        if (b[i].size() > colMax)
+            colMax = b[i].size();
 
     // Print column order as letter
     cout << endl;
     printn(' ', padding + 1);
-    for (int j = 0; j < b[0].size(); ++j)
+    for (int j = 0; j < colMax; ++j)
         cout << static_cast<char>('A' + j) << ' ';
     cout << "\n\n";
 
@@ -718,7 +805,7 @@ char cellStateToChar (CellState cs) {
             c = ' ';
             break;
         default:
-            c = '?';
+            c = '\0';
             break;
     }
     return c;
@@ -779,11 +866,104 @@ void printAllBoardTypes () {
 }
 
 /***********************************************************************************
+ * Load(Import) & Save(Export)  
+ **********************************************************************************/
+int saveGame (const vector<vector<CellState>> & board, const char * fileName, int numberofMoves, char GameMode) {
+    ofstream outStream(fileName, ofstream::out);
+    int r;
+
+    if (! outStream.fail()) {
+        outStream << numberofMoves << ' ' << GameMode << endl;
+        exportBoard(board, outStream);
+        r = RETURN_SUCCESS;
+       outStream.close();
+    }
+    else
+        r = RETURN_FAILURE; 
+
+    return r;
+}
+
+int loadGame (vector<vector<CellState>> & board, const char * fileName, int & numberOfMoves, char & GameMode) {
+    ifstream inStream(fileName, ifstream::in);
+    string s;
+    int r;
+
+    if (! inStream.fail()) {
+        inStream >> numberOfMoves;
+        inStream >> s;
+        inStream.get();     // Takes '\n'
+        GameMode = upperCase(s[0]);
+
+        // Check the file configuration
+        if (GameMode == 'H' || GameMode == 'C')
+            r = importBoard(board, inStream);        
+        else 
+            r = RETURN_FAILURE;
+        inStream.close();
+        /*
+        #ifndef NDEBUG
+            cout << "Number of moves: " << numberOfMoves << endl;
+            cout << "Game mode: " << GameMode << endl;
+            cout << "Row: " << board.size() << ", Col(1): " << board[0].size() << endl;
+            showBoard(board);
+        #endif
+        */
+    }
+    else
+        r = RETURN_FAILURE;
+
+    return r;
+}
+
+int importBoard (vector<vector<CellState>> & b, ifstream & inStream) {
+    int r;
+
+    if (! inStream.fail()) {
+        r = RETURN_SUCCESS;
+        int i = 0;
+        char c;
+
+        b.resize(0);
+        b.resize(1);
+        //! A bord has max 26 col and 9 row 
+        while (inStream.get(c) && r != RETURN_FAILURE) {
+            switch (c) {
+                case 'P':
+                    b[i].push_back(CellState::peg);     break;
+                case ' ':
+                    b[i].push_back(CellState::out);     break;
+                case '.':
+                    b[i].push_back(CellState::empty);   break;
+                case '\n':
+                    ++i;
+                    b.resize(b.size() + 1);             break;
+                default:
+                    r == RETURN_FAILURE;
+                    cerr << "Invalid char\nAborted\n"; //!
+            }
+        }
+    }
+    else
+        r = RETURN_FAILURE;
+    return r;
+}
+
+void exportBoard(const vector<vector<CellState>> & b, ofstream & outStream) {
+    for (int i = 0; i < b.size(); ++i) {
+        for (auto it = b[i].begin(); it != b[i].end(); ++it)
+            outStream << cellStateToChar(*it);
+        if (i + 1 != b.size()) 
+            outStream << endl;
+    }
+}
+
+/***********************************************************************************
  * Utility 
  **********************************************************************************/
 
 void throwError (string prompt) {
-    cout << "[!] " << prompt << endl;
+    cerr << "[!] " << prompt << endl;
 }
 
 bool getChoice (string prompt) {
@@ -876,7 +1056,7 @@ int strToInt (string & s) {
 }
 
 void showNextPageEffect () {
-    cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n";
+    cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n";
 }
 
 bool isInRange (int n, int lb, int ub) {
