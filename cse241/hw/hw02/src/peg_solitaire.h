@@ -18,11 +18,15 @@ const int RETURN_SUCCESS =  0;  // return value for successfull execution
 const int RETURN_FAILURE = -1;  // return value for unsuccessfull execution
 const int RETURN_SUDO    = -2;  // return value for stopped execution by user
 
+enum class GameMode {human, computer, undefined, none};
+
 enum class CellState {empty, peg, out};
 
 enum class BoardType {french = 1, german = 2, asymmetrical = 3, english = 4, diamond = 5, triangular = 6};
 
 enum class Direction {up, down, right, left, upRight, upLeft, downRight, downLeft, none};
+
+enum class Command {load, save, exit, none};
 
 /***********************************************************************************
  * Game Management
@@ -34,9 +38,9 @@ void startNewGame ();
 
 void continueGame ();
 
-void playHumanMode (vector<vector<CellState>> & board);
+void playHumanMode (vector<vector<CellState>> & board, int & numberOfMoves);
 
-void playComputerMode (vector<vector<CellState>> & board);
+void playComputerMode (vector<vector<CellState>> & board, int & numberOfMoves);
 
 int createRandomMovement (const vector<vector<CellState>> & board, int & startRow, int & startCol, Direction & dir);
 // In case of succesfull execution returns RETURN_SUCCESS, on the other hand
@@ -80,11 +84,13 @@ bool isGameOver (const vector<vector<CellState>> & board);
 
 int calculateScore (const vector<vector<CellState>> & board);
 
-void welcomeGreet();
-// Prints welcome message for the gamer
-
 void showGameRules ();
 // Prints the rule of the games
+
+void showGameResult (int score, int numberOfMovement);
+
+void welcomeGreet();
+// Prints welcome message for the gamer
 
 /***********************************************************************************
  * Board Start
@@ -107,8 +113,8 @@ void initBoardTriangular(vector<vector<CellState>> & board);
 void createBoard (vector<vector<CellState>> & b, int row, int col, CellState c);
 // Creates a board as given dimension and initiliaze all the board with c
 
-void showGameStatus (const vector<vector<CellState>> & board, int numberOfMoves, char gameMode);
-//! NEW
+void showGameStatus (const vector<vector<CellState>> & board, int numberOfMoves, GameMode gm);
+// Print to the screen current game status(number of moves etc.) and the current board
 
 void showBoard (const vector<vector<CellState>> & b);
 // Prints the curent status of board
@@ -134,24 +140,25 @@ void printAllBoardTypes ();
 /***********************************************************************************
  * Load(Import) & Save(Export)  
  **********************************************************************************/
-int saveGame (const vector<vector<CellState>> & board, const char * fileName, int numberofMoves, char gameMode);
-//! NOT IMPLEMENTED PROPERLY
+int saveGame (const vector<vector<CellState>> & board, const char * fileName, GameMode gm, int numberofMoves);
 
-int loadGame (vector<vector<CellState>> & board, const char * fileName, int & numberOfMoves, char & gameMode);
-//! NOT IMPLEMENTED PROPERLY
+int loadGame (vector<vector<CellState>> & board, const char * fileName, GameMode & gm, int & numberOfMoves);
 
 int importBoard (vector<vector<CellState>> & b, ifstream & inStream);
-//! NOT IMPLEMENTED PROPERLY
 
 void exportBoard(const vector<vector<CellState>> & b, ofstream & outStream);
-//! NOT IMPLEMENTED PROPERLY
 
+int takeTxtname (string & fname);
+
+bool isTxtFormat (const string & fileName);
+
+Command whichCommand (const string & s);
+Command whichCommand (const char * s);
+// Returns the type pf the command (exit, load etc.)
 
 /***********************************************************************************
  * Utility
  **********************************************************************************/
-void throwError (string prompt);
-
 bool getChoice (string prompt);
 // Prompt the user a Y/N question and returns it's value Y for true, N for false  
 
@@ -168,6 +175,15 @@ string BoardTypeToStr (BoardType btype);
 int strToInt (string & s);
 // Converts string to integer value 
 // Returns RETURN_FAILURE existance of nondigit charachter  
+
+char gameModeToChar (GameMode gm);
+
+GameMode charToGameMode (char gm);
+
+void strToCstr (const string & str, char * cstr);
+// Precondition: cstr array has at least n space (n = str.lenght() + 1)
+
+int cstrlen (const char * s);
 
 void showNextPageEffect ();
 

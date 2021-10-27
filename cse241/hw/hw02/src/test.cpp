@@ -16,18 +16,7 @@
 
 using namespace std;
 
-void test01 ();
-// Tests LoadGame function
-
-void readBoard (vector<vector<CellState>> b);
-void printBoard (vector<vector<CellState>> b);
-
 int main (void) {
     pegStart();
     return 0;
-}
-
-
-void test01 () {
-    continueGame();
 }

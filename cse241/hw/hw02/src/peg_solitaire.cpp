@@ -34,21 +34,21 @@ void pegStart () {
     showGameRules();
 
     do {
+        showNextPageEffect();
         // Main Menu
         cout << "0. Exit\n"
              << "1. Start New Game\n"
              << "2. Continue Game\n";
         choice = getChoice("Choose: ", 0, 2);
-
         switch (choice) {
             case 0:
-                exit = getChoice("Are you sure (y or n) ");
-                break;
+                exit = getChoice("Are you sure (y or n) "); break;
             case 1:
+                showNextPageEffect();
                 startNewGame(); break;
             case 2:
+                showNextPageEffect();
                 continueGame(); break;
-                break;
         }
     } while (! exit);
     cout << "EXIT\n";
@@ -71,8 +71,8 @@ void startNewGame () {
          << "7. Random Selection\n";
     choice = getChoice("Select your board: ", 0, 7);
     
+    // Select a random board
     if (choice == 7) {
-        // Select a random board
         srand(time(NULL));
         choice = rand() % 6 + 1;
         string randBoard = BoardTypeToStr(static_cast<BoardType>(choice));
@@ -90,57 +90,55 @@ void startNewGame () {
     choice = getChoice("Select the game type: ", 0, 2);
 
     if (choice != 0) {
+        showNextPageEffect();
+        int numberOfMovement = 0;
         switch (choice) {
             case 1:
-                playHumanMode(board);    break;
+                playHumanMode(board, numberOfMovement);    break;
             case 2:
-                playComputerMode(board); break;
+                playComputerMode(board, numberOfMovement); break;
         }
-        // Calculate and print the score, ask for play again
-        showNextPageEffect();
-        cout << "\nGame is Over!\n" 
-             << "Score: " << calculateScore(board) << "\n\n";
-        showNextPageEffect();
+        showGameResult(calculateScore(board), numberOfMovement);
     }
 }
 
 void continueGame () {
     vector<vector<CellState>> board;
-    char fileName[100];
     ifstream inStream;
+    int numberOfMovement;
     int r;
-    int numberOfMoves;
-    char gameMode;
+    GameMode gm(GameMode::undefined);   // Initialy gamemode undefined
 
     // Load the game configuration 
     do {
-        cout << "File name: ";
-        cin >> fileName;
-        if (upperCase(fileName[0]) == 'E' && upperCase(fileName[1]) == 'X' && upperCase(fileName[2]) == 'I' && upperCase(fileName[3]) == 'T')
+        char command[100];
+        cout << "Enter your file name: ";
+        cin >> command;
+        // Check if user enter command exit
+        if (whichCommand(command) == Command::exit)
             r = RETURN_SUDO;
-        else {
-            r = loadGame(board, fileName, numberOfMoves, gameMode);
-            if (r != RETURN_SUCCESS)
-                throwError("Board was unable to load correctly");
-                //! NOT IMPLEMENTED YET
-        }
+        else
+            r = loadGame(board, command, gm, numberOfMovement);
     } while (r == RETURN_FAILURE);
 
-    //* Lets assume we open the file and import the board configuration
-    switch (gameMode) {
-        case 'C': 
-            playComputerMode(board);  break;
-        case 'H': 
-            playHumanMode(board);     break;
+    if (r != RETURN_SUDO) {
+        cout << "Your game is loaded\n";
+        showNextPageEffect();
+        switch (gm) {
+            case GameMode::computer: 
+                playComputerMode(board, numberOfMovement);  break;
+            case GameMode::human: 
+                playHumanMode(board, numberOfMovement);     break;
+        }
+        showGameResult(calculateScore(board), numberOfMovement);
     }
 }
 
-void playHumanMode (vector<vector<CellState>> & board) {
+void playHumanMode (vector<vector<CellState>> & board, int & numberOfMovement) {
     int r;
-    int numberOfMoves = 0;
-    char gameMode = 'H';
+    GameMode gm(GameMode::human);
 
-    showGameStatus(board, 0, 'H');
+    showGameStatus(board, 0, gm);
 
     do {
         int startRow, startCol;
@@ -156,32 +154,35 @@ void playHumanMode (vector<vector<CellState>> & board) {
         if (getMovement(strMov, startRow, startCol, dir) == RETURN_SUCCESS) {
             r = applyMovement(board, startRow, startCol, dir);
             if (r == RETURN_SUCCESS)
-                showGameStatus(board, ++numberOfMoves, 'H');
+                showGameStatus(board, ++numberOfMovement, gm);
             else
                 r = RETURN_FAILURE;
         }
         else if (strMov[0] == 'S' && strMov[1] == 'A' && strMov[2] == 'V' && strMov[3] == 'E') {
             cin >> fileName;
-            r = saveGame(board, fileName, numberOfMoves, gameMode);
-            if (r == RETURN_SUCCESS)
-                cout << "Saved successfuly\n";
+            r = saveGame(board, fileName, gm, numberOfMovement);
+            if (r == RETURN_SUCCESS) {
+                cout << "Game is saved successfuly\n";
+                showNextPageEffect();
+            }
         }
         else if (strMov[0] == 'L' && strMov[1] == 'O' && strMov[2] == 'A' && strMov[3] == 'D') {
             cin >> fileName;
-            r = loadGame(board, fileName, numberOfMoves, gameMode);
+            r = loadGame(board, fileName, gm, numberOfMovement);
             if (r == RETURN_SUCCESS) {
-                cout << "Loaded successfuly\n";
-                showGameStatus(board, numberOfMoves, 'H');
+                cout << "Game loaded successfuly\n";
+                showNextPageEffect();
+                showGameStatus(board, numberOfMovement, gm);
             }
             else
                 r = RETURN_FAILURE;
         }
         else if (strMov == "EXIT") {
-            bool c = getChoice("Are you sure you want to exit the game without saving your progress(y or n) ");
-            if (c == false) {
+            if (getChoice("Do you want to save your progress? (y or n) ")) {
                 cout << "Enter the file name: ";
                 cin >> fileName;
-                saveGame(board, fileName, numberOfMoves, gameMode);
+                if (whichCommand(fileName) != Command::exit)
+                    saveGame(board, fileName, gm, numberOfMovement);
             }
             r = RETURN_SUDO;
         }
@@ -189,26 +190,67 @@ void playHumanMode (vector<vector<CellState>> & board) {
             r = RETURN_FAILURE;
         
         if (r == RETURN_FAILURE)
-            throwError("Invalid movement format");
+            cerr << "(!) Invalid movement format\n";
     } while (r != RETURN_SUDO && (r == RETURN_FAILURE || isGameOver(board) == false));
 }
 
-void playComputerMode (vector<vector<CellState>> & board) {
-    int startRow, startCol, numberOfMoves = 0; 
+void playComputerMode (vector<vector<CellState>> & board, int & numberOfMovement) {
+    int startRow, startCol; 
+    GameMode gm(GameMode::computer);
     Direction dir;
+    bool exit = false;
 
-    // showBoard(board);
-    showGameStatus(board, 0, 'C');
-    while (createRandomMovement(board, startRow, startCol, dir) == RETURN_SUCCESS) {
-        // Print the movement made by computer
-        cout << "\nNext Movement: " << static_cast<char>('A' + startCol) << static_cast<char>('1' + startRow) << '-' << dirToStr(dir) << endl;
-        applyMovement(board, startRow, startCol, dir);
+    showGameStatus(board, 0, gm);
+    while (createRandomMovement(board, startRow, startCol, dir) == RETURN_SUCCESS && !exit) {
+        // Print the movement will apply by computer
+        cout << "\nMovement: " << static_cast<char>('A' + startCol) << static_cast<char>('1' + startRow) << '-' << dirToStr(dir) << endl;
+        
+        char c;
+        string command; 
+
         cout << "Enter to continue ";
-        cin.get();
-        cout << "\n";
+        // if user just enter this for loop does not execute
+        for (cin.get(c); c != '\n'; cin.get(c))
+            command.push_back(c);
 
-        // showBoard(board);
-        showGameStatus(board, ++numberOfMoves, 'C');
+        if (command.length() == 0) {    // User just enter (c = '\n')
+            applyMovement(board, startRow, startCol, dir);
+            showGameStatus(board, ++numberOfMovement, gm);
+        }
+        else {
+            string s;
+            char fname[100];
+            Command commandType = whichCommand(command);
+
+            switch (commandType) {
+                case Command::exit:
+                    if (getChoice("Do you want to save your progress? (y or n) ")) {
+                        cout << "Enter the file name: ";
+                        cin >> fname;
+                        saveGame(board, fname, gm, numberOfMovement);
+                    }
+                    exit = true;
+                    break;
+                case Command::load:
+                case Command::save:
+                    //! Optimization needed for commands contain multiple spaces
+                    if (command.length() >= 5) {
+                        strToCstr(command.substr(5), fname);
+                        if (commandType == Command::load) {
+                            loadGame(board, fname, gm, numberOfMovement);
+                            showNextPageEffect();
+                        }
+                        else {
+                            showNextPageEffect();
+                            saveGame(board, fname, gm, numberOfMovement);
+                        }
+                        showGameStatus(board, numberOfMovement, gm);
+                    }
+                    break;
+                case Command::none:
+                    cerr << "(!) " << command << " command not found\n";
+            }
+        }
     }
 }
 
@@ -433,7 +475,7 @@ bool isMovable (const vector<vector<CellState>> & board, int startRow, int start
         int v, jumpRow, jumpCol, targetRow, targetCol;
         v = getMoveCell(board, startRow, startCol, dir, jumpRow, jumpCol, targetRow, targetCol);
         
-        r = v == RETURN_SUCCESS                               &&
+        r = v == RETURN_SUCCESS                             &&
             isInBoard(board, startRow, startCol)            && 
             board[startRow][startCol] == CellState::peg     &&
             isInBoard(board, jumpRow, jumpCol)              && 
@@ -549,7 +591,13 @@ void showGameRules () {
     
     cout << "Enter to continue ";
     cin.get();
-    cout << "\n\n";
+}
+
+void showGameResult (int score, int numberOfMovement) {
+    cout << "==========================================\n" 
+         << "Number of Movement: " << numberOfMovement << endl
+         << "Score: " << score << "\n"
+         << "==========================================\n\n";
 }
 
 void welcomeGreet () {
@@ -577,7 +625,7 @@ void initBoard (vector<vector<CellState>>& b, BoardType btype) {
         case BoardType::triangular:
             initBoardTriangular(b);     break;
         default:
-           throwError("Undefined board type. Board was unable to create correctly");
+           cerr << "(!) Undefined board type. Board was unable to create correctly\n";
     }
 }
 
@@ -704,10 +752,11 @@ void createBoard (vector<vector<CellState>> & b, int row, int col, CellState c) 
     }
 }
 
-void showGameStatus (const vector<vector<CellState>> & board, int numberOfMoves, char gameMode) {
+void showGameStatus (const vector<vector<CellState>> & board, int numberOfMovement, GameMode gm) {
+    // Playing game mode could be Computer or Human 
     cout << "\n-----------------------------\n"
-         << "Game Mode: " << (gameMode == 'C' ? "Computer" : "Human") << endl
-         << "Number of Moves: " << numberOfMoves << endl
+         << "Game Mode: " << (gm == GameMode::computer ? "Computer" : "Human") << endl
+         << "Number of Moves: " << numberOfMovement << endl
          << "-----------------------------\n";
     showBoard(board);
 }
@@ -868,50 +917,52 @@ void printAllBoardTypes () {
 /***********************************************************************************
  * Load(Import) & Save(Export)  
  **********************************************************************************/
-int saveGame (const vector<vector<CellState>> & board, const char * fileName, int numberofMoves, char GameMode) {
+int saveGame (const vector<vector<CellState>> & board, const char * fileName, GameMode gm, int numberOfMovement) {
     ofstream outStream(fileName, ofstream::out);
     int r;
 
     if (! outStream.fail()) {
-        outStream << numberofMoves << ' ' << GameMode << endl;
+        outStream << numberOfMovement << ' ' << gameModeToChar(gm) << endl;
         exportBoard(board, outStream);
+        outStream.close();
         r = RETURN_SUCCESS;
-       outStream.close();
     }
-    else
+    else {
+        cerr << "(!) File was unable to open correctly\n"; 
         r = RETURN_FAILURE; 
+    }
 
     return r;
 }
 
-int loadGame (vector<vector<CellState>> & board, const char * fileName, int & numberOfMoves, char & GameMode) {
+int loadGame (vector<vector<CellState>> & board, const char * fileName, GameMode & gm, int & numberOfMovement) {
     ifstream inStream(fileName, ifstream::in);
+    int r = RETURN_FAILURE, n;
+    GameMode gm_load; 
     string s;
-    int r;
 
     if (! inStream.fail()) {
-        inStream >> numberOfMoves;
-        inStream >> s;
-        inStream.get();     // Takes '\n'
-        GameMode = upperCase(s[0]);
+        // Get the first line of file
+        inStream >> n >> s;
+        inStream.get();     // get rid of new line charachter('\n)'
+        gm_load = charToGameMode(s[0]);
 
         // Check the file configuration
-        if (GameMode == 'H' || GameMode == 'C')
+        if (gm_load != GameMode::none && (gm == GameMode::undefined || gm_load == gm)) {
             r = importBoard(board, inStream);        
-        else 
-            r = RETURN_FAILURE;
+            if (r == RETURN_SUCCESS) {
+                numberOfMovement = n;
+                gm = gm_load;
+            }
+            else 
+                cerr << "(!) Invalid board configuration. Game was unable to load correctly\n";
+        }
+        else
+            cerr << "(!) Invalid game mode. Game was unable to load correctly\n"; 
         inStream.close();
-        /*
-        #ifndef NDEBUG
-            cout << "Number of moves: " << numberOfMoves << endl;
-            cout << "Game mode: " << GameMode << endl;
-            cout << "Row: " << board.size() << ", Col(1): " << board[0].size() << endl;
-            showBoard(board);
-        #endif
-        */
     }
     else
-        r = RETURN_FAILURE;
+        cerr << "(!) File was unable to open correctly\n"; 
 
     return r;
 }
@@ -920,27 +971,36 @@ int importBoard (vector<vector<CellState>> & b, ifstream & inStream) {
     int r;
 
     if (! inStream.fail()) {
+        int i = 0, colCur = 0, colMax = 0;
         r = RETURN_SUCCESS;
-        int i = 0;
-        char c;
+        char c1, c2;
 
-        b.resize(0);
+        b.resize(0);    // Clear the vector
         b.resize(1);
-        //! A bord has max 26 col and 9 row 
-        while (inStream.get(c) && r != RETURN_FAILURE) {
-            switch (c) {
+
+        //! Board should have max 26 col and 9 row for good GUI 
+        while (inStream.get(c1) && r == RETURN_SUCCESS) {
+            inStream.get(c2);
+            
+            switch (c1) {
                 case 'P':
                     b[i].push_back(CellState::peg);     break;
                 case ' ':
                     b[i].push_back(CellState::out);     break;
                 case '.':
                     b[i].push_back(CellState::empty);   break;
-                case '\n':
-                    ++i;
-                    b.resize(b.size() + 1);             break;
                 default:
-                    r == RETURN_FAILURE;
-                    cerr << "Invalid char\nAborted\n"; //!
+                    cerr << "(!) Invalid charachter " << '"' << c1 << '"' << endl;
+                    r = RETURN_FAILURE;
+            }
+
+            // Create a new row
+            if (r == RETURN_SUCCESS && c2 == '\n') {
+                ++i;
+                b.resize(b.size() + 1);
+                // Keep the Max coloumn number to have a rectangular 2D vector
+                if (colCur > colMax)
+                    colMax = colCur;
             }
         }
     }
@@ -949,22 +1009,81 @@ int importBoard (vector<vector<CellState>> & b, ifstream & inStream) {
     return r;
 }
 
-void exportBoard(const vector<vector<CellState>> & b, ofstream & outStream) {
+void exportBoard (const vector<vector<CellState>> & b, ofstream & outStream) {
     for (int i = 0; i < b.size(); ++i) {
-        for (auto it = b[i].begin(); it != b[i].end(); ++it)
+        for (auto it = b[i].begin(); it != b[i].end(); ++it) {
             outStream << cellStateToChar(*it);
+            if (it + 1 != b[i].end()) 
+                outStream << ' ';
+        }
         if (i + 1 != b.size()) 
             outStream << endl;
     }
 }
 
+int takeTxtname (string & fname) {
+    int i = 0;
+    char c;
+    int r = RETURN_SUCCESS;
+    bool nextStep = false;
+
+    cout << "File name: ";
+    cin >> fname[i];
+    
+    return isTxtFormat(fname) ? RETURN_SUCCESS : RETURN_FAILURE;
+}
+
+bool isTxtFormat (const string & fileName) {
+    int i;
+
+    // Check till dot(.), no emty place
+    for (i = 0; fileName[i] != '.'; ++i)
+        if (fileName[i] == ' ' || fileName[i] == '\0')
+            return false;
+    
+    if (upperCase(fileName[i + 1]) == 'T' && upperCase(fileName[i + 2]) == 'X' && upperCase(fileName[i + 3]) == 'T')
+        return true;
+    else
+        return false;
+}
+
+Command whichCommand (const string & s) {
+    Command c = Command::none;
+
+    if (s.length() >= 4) {
+        if (upperCase(s[0]) == 'E' && upperCase(s[1]) == 'X' &&
+            upperCase(s[2]) == 'I' && upperCase(s[3]) == 'T' )
+            c = Command::exit;
+        else if (upperCase(s[0]) == 'L' && upperCase(s[1]) == 'O' &&
+                 upperCase(s[2]) == 'A' && upperCase(s[3]) == 'D' )
+            c = Command::load;
+        else if (upperCase(s[0]) == 'S' && upperCase(s[1]) == 'A' &&
+                 upperCase(s[2]) == 'V' && upperCase(s[3]) == 'E' )
+            c = Command::save;
+    }
+    return c;
+}
+
+Command whichCommand (const char * s) {
+    Command c = Command::none;
+
+    if (cstrlen(s) >= 4) {
+        if (upperCase(s[0]) == 'E' && upperCase(s[1]) == 'X' &&
+            upperCase(s[2]) == 'I' && upperCase(s[3]) == 'T' )
+            c = Command::exit;
+        else if (upperCase(s[0]) == 'L' && upperCase(s[1]) == 'O' &&
+                 upperCase(s[2]) == 'A' && upperCase(s[3]) == 'D' )
+            c = Command::load;
+        else if (upperCase(s[0]) == 'S' && upperCase(s[1]) == 'A' &&
+                 upperCase(s[2]) == 'V' && upperCase(s[3]) == 'E' )
+            c = Command::save;
+    }
+    return c;
+}
+
 /***********************************************************************************
  * Utility 
  **********************************************************************************/
-
-void throwError (string prompt) {
-    cerr << "[!] " << prompt << endl;
-}
 
 bool getChoice (string prompt) {
     bool exit = false;
@@ -981,6 +1100,7 @@ bool getChoice (string prompt) {
         else
             cout << "Please select a proper choose: ";
     } while (exit == false);
+    cin.get();  // consume \n
     return c == 'Y' ? true : false;
 }
 
@@ -999,6 +1119,7 @@ int getChoice (string prompt, int lb, int ub) {
         else
             cout << "Please select a proper choose: ";
     } while (exit == false);
+    cin.get();  // consume \n
     return r;    
 }
 
@@ -1018,6 +1139,7 @@ int getChoice (string inPrompt, string errPrompt, int lb, int ub) {
             cout << errPrompt << endl
                  << "Please select a proper choose: ";
     } while (exit == false);
+    cin.get();  // consume \n
     return r;
 }
 
@@ -1037,7 +1159,7 @@ string BoardTypeToStr (BoardType btype) {
         case BoardType::triangular:
             s = "Triangular";   break;
         default:
-            throwError("Undefined board type");
+            cerr << "(!) Undefined board type";
     }
     return s;
 }
@@ -1055,8 +1177,55 @@ int strToInt (string & s) {
     return r;
 }
 
+char gameModeToChar (GameMode gm) {
+    char r;
+    switch (gm) {
+        case GameMode::computer:
+            r = 'C'; break;
+        case GameMode::human:
+            r = 'H'; break;
+        case GameMode::undefined:
+            r = 'U'; break;
+        case GameMode::none:
+            r = 'N';   
+    }
+    return r;
+}
+
+GameMode charToGameMode (char gm) {
+    GameMode r;
+    switch (upperCase(gm)) {
+        case 'C':
+            r = GameMode::computer;  break;
+        case 'H':
+            r = GameMode::human;     break;
+        case 'U':
+            r = GameMode::undefined; break;
+        case 'N':
+        default:
+            r = GameMode::none;
+    }
+
+    return r;
+}
+
+void strToCstr (const string & str, char * cstr) {
+    int i;
+    for (i = 0; i < str.length(); ++i)
+        cstr[i] = str[i];
+    cstr[i] = '\0';
+}
+
+int cstrlen (const char * s) {
+    int r = 0;
+    if (s != NULL)
+        while (s[r] != '\0')
+            ++r;
+    return r;
+}
+
 void showNextPageEffect () {
-    cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n";
+    cout << "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n";
 }
 
 bool isInRange (int n, int lb, int ub) {
