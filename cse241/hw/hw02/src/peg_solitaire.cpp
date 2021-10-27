@@ -34,24 +34,22 @@ void pegStart () {
     showGameRules();
 
     do {
-        showNextPageEffect();
-        // Main Menu
-        cout << "0. Exit\n"
+        cout << "\n============ Main Menu ============\n"
+             << "0. Exit\n"
              << "1. Start New Game\n"
              << "2. Continue Game\n";
         choice = getChoice("Choose: ", 0, 2);
+        showNextPageEffect();
         switch (choice) {
             case 0:
                 exit = getChoice("Are you sure (y or n) "); break;
             case 1:
-                showNextPageEffect();
                 startNewGame(); break;
             case 2:
-                showNextPageEffect();
                 continueGame(); break;
         }
     } while (! exit);
-    cout << "EXIT\n";
+    cout << "======================== EXIT ========================\n";
 }
 
 void startNewGame () {
@@ -84,21 +82,23 @@ void startNewGame () {
 
     // There are two types of game: Human & Computer
     showNextPageEffect();
-    cout << "0. Come Back to Main Menu\n"
+    cout << "0. Return Main Menu\n"
          << "1. Human Game\n"
          << "2. Computer Game\n";
     choice = getChoice("Select the game type: ", 0, 2);
 
     if (choice != 0) {
         showNextPageEffect();
-        int numberOfMovement = 0;
+        decltype(choice) numberOfMovement = 0; // int numberOfMovement = 0;
         switch (choice) {
             case 1:
-                playHumanMode(board, numberOfMovement);    break;
+                numberOfMovement = playHumanMode(board);    break;
             case 2:
-                playComputerMode(board, numberOfMovement); break;
+                numberOfMovement = playComputerMode(board); break;
         }
         showGameResult(calculateScore(board), numberOfMovement);
+        cout << "Enter to continue ";
+        cin.get();
     }
 }
 
@@ -126,15 +126,17 @@ void continueGame () {
         showNextPageEffect();
         switch (gm) {
             case GameMode::computer: 
-                playComputerMode(board, numberOfMovement);  break;
+                numberOfMovement = playComputerMode(board, numberOfMovement);  break;
             case GameMode::human: 
-                playHumanMode(board, numberOfMovement);     break;
+                numberOfMovement = playHumanMode(board, numberOfMovement);     break;
         }
         showGameResult(calculateScore(board), numberOfMovement);
+        cout << "Enter to continue ";
+        cin.get();
     }
 }
 
-void playHumanMode (vector<vector<CellState>> & board, int & numberOfMovement) {
+int playHumanMode (vector<vector<CellState>> & board, int numberOfMovement) {
     int r;
     GameMode gm(GameMode::human);
 
@@ -158,7 +160,7 @@ void playHumanMode (vector<vector<CellState>> & board, int & numberOfMovement) {
             else
                 r = RETURN_FAILURE;
         }
-        else if (strMov[0] == 'S' && strMov[1] == 'A' && strMov[2] == 'V' && strMov[3] == 'E') {
+        else if (whichCommand(strMov) == Command::save) {
             cin >> fileName;
             r = saveGame(board, fileName, gm, numberOfMovement);
             if (r == RETURN_SUCCESS) {
@@ -166,7 +168,7 @@ void playHumanMode (vector<vector<CellState>> & board, int & numberOfMovement) {
                 showNextPageEffect();
             }
         }
-        else if (strMov[0] == 'L' && strMov[1] == 'O' && strMov[2] == 'A' && strMov[3] == 'D') {
+        else if (whichCommand(strMov) == Command::load) {
             cin >> fileName;
             r = loadGame(board, fileName, gm, numberOfMovement);
             if (r == RETURN_SUCCESS) {
@@ -177,7 +179,7 @@ void playHumanMode (vector<vector<CellState>> & board, int & numberOfMovement) {
             else
                 r = RETURN_FAILURE;
         }
-        else if (strMov == "EXIT") {
+        else if (whichCommand(strMov) == Command::exit) {
             if (getChoice("Do you want to save your progress? (y or n) ")) {
                 cout << "Enter the file name: ";
                 cin >> fileName;
@@ -186,15 +188,15 @@ void playHumanMode (vector<vector<CellState>> & board, int & numberOfMovement) {
             }
             r = RETURN_SUDO;
         }
-        else 
-            r = RETURN_FAILURE;
-        
-        if (r == RETURN_FAILURE)
+        else {
             cerr << "(!) Invalid movement format\n";
+            r = RETURN_FAILURE;
+        }
     } while (r != RETURN_SUDO && (r == RETURN_FAILURE || isGameOver(board) == false));
+    return numberOfMovement;
 }
 
-void playComputerMode (vector<vector<CellState>> & board, int & numberOfMovement) {
+int playComputerMode (vector<vector<CellState>> & board, int numberOfMovement) {
     int startRow, startCol; 
     GameMode gm(GameMode::computer);
     Direction dir;
@@ -203,12 +205,13 @@ void playComputerMode (vector<vector<CellState>> & board, int & numberOfMovement
     showGameStatus(board, 0, gm);
     while (createRandomMovement(board, startRow, startCol, dir) == RETURN_SUCCESS && !exit) {
         // Print the movement will apply by computer
-        cout << "\nMovement: " << static_cast<char>('A' + startCol) << static_cast<char>('1' + startRow) << '-' << dirToStr(dir) << endl;
+        cout << "\nComputer Movement: " << static_cast<char>('A' + startCol) << static_cast<char>('1' + startRow) << '-' << dirToStr(dir)
+             << " (enter to continue)\n"
+             << ">> ";
         
         char c;
         string command; 
 
-        cout << "Enter to continue ";
         // if user just enter this for loop does not execute
         for (cin.get(c); c != '\n'; cin.get(c))
             command.push_back(c);
@@ -227,6 +230,7 @@ void playComputerMode (vector<vector<CellState>> & board, int & numberOfMovement
                     if (getChoice("Do you want to save your progress? (y or n) ")) {
                         cout << "Enter the file name: ";
                         cin >> fname;
+                        cin.get();  // Take the new line chararchter
                         saveGame(board, fname, gm, numberOfMovement);
                     }
                     exit = true;
@@ -252,6 +256,7 @@ void playComputerMode (vector<vector<CellState>> & board, int & numberOfMovement
             }
         }
     }
+    return numberOfMovement;
 }
 
 int createRandomMovement (const vector<vector<CellState>> & board, int & startRow, int & startCol, Direction & dir) {
@@ -537,17 +542,15 @@ int calculateScore (const vector<vector<CellState>> & board) {
 }
 
 void showGameRules () {
-    cout << "Direction Commands\n"
-         << "=============================================\n\n"
+
+    cout << "================ GAME RULES ================\n\n"
+         << "Movement Directions\n"
+         << "---------------------------------------------\n"
          << " U: Up                 U\n"
          << " D: Down           UL  |  UR\n"
          << " L: Left        L -----|----- R\n"
          << " R: Right          DL  |  DR\n"
          << "                       D\n\n";
-
-    cout << "Game Rules\n"
-         << "=============================================\n\n";
-
     cout << "Triangular Board\n"
          << "---------------------------------------------\n"
          << "Interface                  Notation\n" 
@@ -575,8 +578,16 @@ void showGameRules () {
          << "7      P P P                     C7 D7 E7\n\n"
          << "// Diagonal movements(UL, DL, UR, DR) are invalid for non-triangular board\n\n";
 
-    cout << "Example Movements\n"
-         << "=============================================\n\n"
+    cout << "================ GAME MODES ================\n\n"
+         << "// There are 2 type of games: Human mode and Computer mode\n"
+         << "Human Mode\n"
+         << "------------------\n"
+         << "// All the movements done by the player\n"
+         << "Computer Mode\n"
+         << "------------------\n"
+         << "// All the movements done by the computer\n\n";
+
+    cout << "============= EXAMPLE MOVEMENTS ============\n\n"
          << "Diagonal Movements\n"
          << "------------------\n"
          << "A3-UR: Select cell at coloumn A, row 3 and move to the Up-Right\n"
@@ -589,14 +600,23 @@ void showGameRules () {
          << "------------------\n"
          << "// Type EXIT to exit the movement screen\n\n";
     
+    cout << "================= COMMANDS ================\n\n"
+         << "/****/ You can use these commands when you see terminal sign(>>)\n\n"
+         << "// exit: Exits from current place\n"
+         << "       usage: exit\n\n"
+         << "// save: Saves the current progress of the game\n"
+         << "       usage: save filename.txt\n\n"
+         << "// load: Loads the spefic game\n"
+         << "       usage: load filename.txt\n\n";
+
     cout << "Enter to continue ";
     cin.get();
 }
 
 void showGameResult (int score, int numberOfMovement) {
-    cout << "==========================================\n" 
-         << "Number of Movement: " << numberOfMovement << endl
-         << "Score: " << score << "\n"
+    cout << "\n============== GAME IS OVER ==============\n" 
+         << "\tNumber of Movement: " << numberOfMovement << endl
+         << "\tScore: " << score << "\n"
          << "==========================================\n\n";
 }
 
@@ -1019,32 +1039,6 @@ void exportBoard (const vector<vector<CellState>> & b, ofstream & outStream) {
         if (i + 1 != b.size()) 
             outStream << endl;
     }
-}
-
-int takeTxtname (string & fname) {
-    int i = 0;
-    char c;
-    int r = RETURN_SUCCESS;
-    bool nextStep = false;
-
-    cout << "File name: ";
-    cin >> fname[i];
-    
-    return isTxtFormat(fname) ? RETURN_SUCCESS : RETURN_FAILURE;
-}
-
-bool isTxtFormat (const string & fileName) {
-    int i;
-
-    // Check till dot(.), no emty place
-    for (i = 0; fileName[i] != '.'; ++i)
-        if (fileName[i] == ' ' || fileName[i] == '\0')
-            return false;
-    
-    if (upperCase(fileName[i + 1]) == 'T' && upperCase(fileName[i + 2]) == 'X' && upperCase(fileName[i + 3]) == 'T')
-        return true;
-    else
-        return false;
 }
 
 Command whichCommand (const string & s) {

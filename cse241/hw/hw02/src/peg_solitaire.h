@@ -33,18 +33,19 @@ enum class Command {load, save, exit, none};
  **********************************************************************************/
 
 void pegStart ();
+// Start the Peg Solitaire game
 
 void startNewGame ();
 
 void continueGame ();
 
-void playHumanMode (vector<vector<CellState>> & board, int & numberOfMoves);
-
-void playComputerMode (vector<vector<CellState>> & board, int & numberOfMoves);
+int playComputerMode (vector<vector<CellState>> & board, int numberOfMovement = 0);
+int playHumanMode (vector<vector<CellState>> & board, int numberOfMovement = 0);
+// Returns the number of moves for successful run and RETURN_FAILURE for unsuccessful execution
 
 int createRandomMovement (const vector<vector<CellState>> & board, int & startRow, int & startCol, Direction & dir);
 // In case of succesfull execution returns RETURN_SUCCESS, on the other hand
-// returns EXIT_FAILURE when the game is over and there is no valid movement remains
+// returns RETURN_FAILURE when the game is over and there is no valid movement remains
 
 int getMovement (const string & mov, int & startRow, int & startCol, Direction & dir);
 // Reads the movement from console and returns the movement as 
@@ -57,7 +58,7 @@ string dirToStr (Direction dir);
 // Generate a string indicate an direction. Exp: U, D, L, R, UR ...
 
 int applyMovement (vector<vector<CellState>> & b, int startRow, int startCol, Direction dir);
-// Applies the movement, for invalid operation returns EXIT_FAILURE
+// Applies the movement, for invalid operation returns RETURN_FAILURE
 
 void moveUp (int & jumpRow, int & targetRow);
 void moveDown (int & jumpRow, int & targetRow);
@@ -147,10 +148,6 @@ int loadGame (vector<vector<CellState>> & board, const char * fileName, GameMode
 int importBoard (vector<vector<CellState>> & b, ifstream & inStream);
 
 void exportBoard(const vector<vector<CellState>> & b, ofstream & outStream);
-
-int takeTxtname (string & fname);
-
-bool isTxtFormat (const string & fileName);
 
 Command whichCommand (const string & s);
 Command whichCommand (const char * s);
