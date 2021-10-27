@@ -39,10 +39,9 @@ void pegStart () {
              << "1. Start New Game\n"
              << "2. Continue Game\n";
         choice = getChoice("Choose: ", 0, 2);
-        showNextPageEffect();
         switch (choice) {
             case 0:
-                exit = getChoice("Are you sure (y or n) "); break;
+                exit = getChoice("\nAre you sure you want to exit the game? (y or n) "); break;
             case 1:
                 startNewGame(); break;
             case 2:
@@ -112,7 +111,7 @@ void continueGame () {
     // Load the game configuration 
     do {
         char command[100];
-        cout << "Enter your file name: ";
+        cout << "\n\nEnter your file name: ";
         cin >> command;
         // Check if user enter command exit
         if (whichCommand(command) == Command::exit)
@@ -146,21 +145,25 @@ int playHumanMode (vector<vector<CellState>> & board, int numberOfMovement) {
         int startRow, startCol;
         char fileName[100];
         bool exit = false;
-        string strMov;
+        string strMov, command;
         Direction dir;
 
-        cout << "\nMovement: ";
-        cin >> strMov;
+        cout << "\nMovement or Command\n"
+             << ">> ";
+        cin >> command;
+        strMov = command;
         convertUpperCase(strMov);
 
         if (getMovement(strMov, startRow, startCol, dir) == RETURN_SUCCESS) {
             r = applyMovement(board, startRow, startCol, dir);
             if (r == RETURN_SUCCESS)
                 showGameStatus(board, ++numberOfMovement, gm);
-            else
+            else {
+                cerr << "(!) Invalid movement\n";
                 r = RETURN_FAILURE;
+            }
         }
-        else if (whichCommand(strMov) == Command::save) {
+        else if (whichCommand(command) == Command::save) {
             cin >> fileName;
             r = saveGame(board, fileName, gm, numberOfMovement);
             if (r == RETURN_SUCCESS) {
@@ -168,7 +171,7 @@ int playHumanMode (vector<vector<CellState>> & board, int numberOfMovement) {
                 showNextPageEffect();
             }
         }
-        else if (whichCommand(strMov) == Command::load) {
+        else if (whichCommand(command) == Command::load) {
             cin >> fileName;
             r = loadGame(board, fileName, gm, numberOfMovement);
             if (r == RETURN_SUCCESS) {
@@ -179,7 +182,7 @@ int playHumanMode (vector<vector<CellState>> & board, int numberOfMovement) {
             else
                 r = RETURN_FAILURE;
         }
-        else if (whichCommand(strMov) == Command::exit) {
+        else if (whichCommand(command) == Command::exit) {
             if (getChoice("Do you want to save your progress? (y or n) ")) {
                 cout << "Enter the file name: ";
                 cin >> fileName;
@@ -189,7 +192,7 @@ int playHumanMode (vector<vector<CellState>> & board, int numberOfMovement) {
             r = RETURN_SUDO;
         }
         else {
-            cerr << "(!) Invalid movement format\n";
+            cerr << "(!) " << command << " command not found\n";
             r = RETURN_FAILURE;
         }
     } while (r != RETURN_SUDO && (r == RETURN_FAILURE || isGameOver(board) == false));
