@@ -695,7 +695,7 @@ void initBoardGerman(vector<vector<CellState>> & board) {
 }   
 
 void initBoardAsymmetrical(vector<vector<CellState>> & board) {
-    createBoard(board, 9, 8, CellState::peg);
+    createBoard(board, 8, 8, CellState::peg);
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 2; ++j)
             board[i][j] = CellState::out;
@@ -704,11 +704,11 @@ void initBoardAsymmetrical(vector<vector<CellState>> & board) {
         for (int j = 5; j < 8; ++j)
             board[i][j] = CellState::out;
 
-    for (int i = 6; i < 9; ++i)
+    for (int i = 6; i < 8; ++i)
         for (int j = 0; j < 2; ++j)
             board[i][j] = CellState::out;
 
-    for (int i = 6; i < 9; ++i)
+    for (int i = 6; i < 8; ++i)
         for (int j = 5; j < 8; ++j)
             board[i][j] = CellState::out;
     
