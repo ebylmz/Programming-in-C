@@ -12,6 +12,14 @@
 #ifndef peg_solitaire
 #define peg_solitaire
 
+#include <iostream>
+#include <vector>
+#include <string>
+#include <fstream>
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
+
 using namespace std;
 
 const int RETURN_SUCCESS =  0;  // return value for successfull execution

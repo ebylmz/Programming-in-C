@@ -9,16 +9,7 @@
  * 
  */
 
-#include <iostream>
-#include <vector>
-#include <string>
-#include <fstream>
-#include <cstdlib>
-#include <ctime>
-#include <cmath>
 #include "peg_solitaire.h"
-
-using namespace std;  
 
 /***********************************************************************************
  * Game Management
