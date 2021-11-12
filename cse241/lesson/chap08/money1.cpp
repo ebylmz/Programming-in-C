@@ -2,13 +2,20 @@
 
 /* An operator is just a function that uses a different syntax for invocations */
 
-/* A (binary) operator, such as +, -, /, %, and so forth, is simply a function that is called using
-a different syntax for listing its arguments. With a binary operator, the arguments are listed
-before and after the operator; with a function the arguments are listed in parentheses after
-the function name. An operator definition is written similar to a function definition, except
-that the operator definition includes the reserved word "operator" before the operator
-name. The predefined operators, such as +, -, and so forth, can be overloaded by giving
-them a new definition for a class type. */
+/** A (binary) operator, such as +, -, /, %, and so forth, is simply a function that is called using
+ *  a different syntax for listing its arguments. With a binary operator, the arguments are listed
+ *  before and after the operator; with a function the arguments are listed in parentheses after
+ *  the function name. An operator definition is written similar to a function definition, except
+ *  that the operator definition includes the reserved word "operator" before the operator
+ *  name. The predefined operators, such as +, -, and so forth, can be overloaded by giving
+ *  them a new definition for a class type. 
+ */
+
+/** Use const quantifier to prevent these kind of stuff: (m1 + m2).input()
+ 
+ *  To use nonmember overloaded operators, there exist accesser and mutator functions, 
+ *  otherwise how we can reach the private data 
+*/
 
 
 #include <iostream>
@@ -40,10 +47,11 @@ class Money {
 };
 
 /* Operator Overloading */
-const Money operator + (const Money & amount1, const Money & amount2);
-const Money operator - (const Money & amount1, const Money & amount2);
-bool operator == (const Money & amount1, const Money & amount2);
-const Money operator - (const Money & amount);     // Unary -
+const Money operator+ (const Money & amount1, const Money & amount2);
+const Money operator- (const Money & amount1, const Money & amount2);
+bool operator== (const Money & amount1, const Money & amount2);
+bool operator!= (const Money & amount1, const Money & amount2);
+const Money operator- (const Money & amount);     // Unary -
 
 
 int main (void) {
@@ -75,8 +83,7 @@ int main (void) {
     return 0;
 }
 
-/* Use const quantifier to prevent these kind of stuff: (m1 + m2).input() */
-const Money operator + (const Money & amount1, const Money & amount2) {
+const Money operator+ (const Money & amount1, const Money & amount2) {
     int allCents1 = amount1.getDollars() * 100 + amount1.getCents();
     int allCents2 = amount2.getDollars() * 100 + amount2.getCents();
     int sumAllCents = allCents1 + allCents2;
@@ -92,29 +99,19 @@ const Money operator + (const Money & amount1, const Money & amount2) {
     return Money(finalDolars, finalCents);
 }
 
-const Money operator - (const Money & amount1, const Money & amount2) {
-    // return amount1 + (-amount2);
-    
-    int allCents1 = amount1.getDollars() * 100 + amount1.getCents();
-    int allCents2 = amount2.getDollars() * 100 + amount2.getCents();
-    int diffAllCents = allCents1 - allCents2;
-    int absAllCents = abs(diffAllCents);
-    int finalDolars = absAllCents / 100;    
-    int finalCents = absAllCents % 100;
-
-    if (diffAllCents < 0) {
-        finalDolars = -finalDolars;
-        finalCents = -finalCents;
-    }
-
-    return Money(finalDolars, finalCents);
+const Money operator- (const Money & amount1, const Money & amount2) {
+    return amount1 + -amount2; // operator+(amount1, operator-(amount2));
 }
 
-bool operator == (const Money & amount1, const Money & amount2) {
+bool operator== (const Money & amount1, const Money & amount2) {
     return amount1.getDollars() == amount2.getDollars() && amount1.getCents() == amount2.getCents();
 }
 
-const Money operator - (const Money & amount) {
+bool operator!= (const Money & amount1, const Money & amount2) {
+    return ! (amount1 == amount2);
+}
+
+const Money operator- (const Money & amount) {
     return Money(-amount.getDollars(), -amount.getCents());
 }    
 

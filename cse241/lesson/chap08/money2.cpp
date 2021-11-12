@@ -49,10 +49,11 @@ class Money {
         void input (); 
         void output () const;
 
-        const Money operator + (const Money & amount2) const;
-        const Money operator - (const Money & amount2) const;
-        bool operator == (const Money & amount2) const;
-        const Money operator - () const;
+        const Money operator+ (const Money & amount2) const;
+        const Money operator- (const Money & amount2) const;
+        bool operator== (const Money & amount2) const;
+        bool operator!= (const Money & amount2) const;
+        const Money operator- () const;
     private:
         /* Take total amount as double and parse it to dollars and cents as int variables */
         int dollars;
@@ -93,7 +94,7 @@ int main (void) {
 
 
 /* Use const quantifier to prevent these kind of stuff: (m1 + m2).input() */
-const Money Money::operator + (const Money & amount2) const {
+const Money Money::operator+ (const Money & amount2) const {
 int allCents1 = dollars * 100 + cents;
     int allCents2 = amount2.getDollars() * 100 + amount2.getCents();
     int sumAllCents = allCents1 + allCents2;
@@ -109,7 +110,7 @@ int allCents1 = dollars * 100 + cents;
     return Money(finalDolars, finalCents);
 }
 
-const Money Money::operator - (const Money & amount2) const {
+const Money Money::operator- (const Money & amount2) const {
     int allCents1 = dollars * 100 + cents;
     int allCents2 = amount2.getDollars() * 100 + amount2.getCents();
     int diffAllCents = allCents1 - allCents2;
@@ -125,11 +126,17 @@ const Money Money::operator - (const Money & amount2) const {
     return Money(finalDolars, finalCents);
 }
 
-bool Money::operator == (const Money & amount2) const {
+
+bool Money::operator== (const Money & amount2) const {
     return dollars == amount2.getDollars() && cents  == amount2.getCents();
 }
 
-const Money Money::operator - () const {
+bool Money::operator!= (const Money & amount2) const {
+    //! By reference we can reach the private data
+    return dollars != amount2.dollars || cents != amount2.cents;
+}
+
+const Money Money::operator- () const {
     return Money(-dollars, -cents);
 }
 
