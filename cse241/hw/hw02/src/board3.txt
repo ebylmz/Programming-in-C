@@ -1,9 +1,0 @@
-0 C
-P P P       P P P       P P P
-  P P P   P P P P P   P P P
-    P P P P P   P P P P P
-      P P P       P P P
-        P P P P P P P
-          P P P P P
-            P P P
-              .
